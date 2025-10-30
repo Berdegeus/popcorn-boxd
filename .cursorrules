@@ -1,0 +1,259 @@
+# AI Development Rules for Popcorn Boxd
+
+## Project Context
+This is a React Native mobile application built with Expo, designed for AI-assisted development.
+
+## Technology Stack
+- React Native 0.81.5
+- Expo SDK 54
+- TypeScript 5.9
+- Expo Router (file-based routing)
+- React 19.1.0
+
+## Code Style & Patterns
+
+### TypeScript
+- Always use TypeScript with explicit types
+- Avoid `any` types - use `unknown` or proper interfaces
+- Define interfaces for all component props
+- Use type inference where obvious, explicit types where helpful
+- Export types and interfaces when reusable
+
+### Components
+- Use functional components with hooks (no class components)
+- Use arrow functions for component definitions
+- Destructure props in function parameters
+- Export named functions for components (except screens which use default export)
+- Keep components small and focused (single responsibility)
+
+### File Structure
+- Screens go in `app/` directory (Expo Router)
+- Reusable components go in `components/`
+- UI primitives go in `components/ui/`
+- Custom hooks go in `hooks/`
+- Constants and config go in `constants/`
+- Types and interfaces can be co-located or in separate `.types.ts` files
+
+### Styling
+- Always use `StyleSheet.create()` for performance
+- Use themed components (`ThemedText`, `ThemedView`) for dark/light mode support
+- Define theme colors in `constants/theme.ts`
+- Use consistent spacing (multiples of 4 or 8)
+- Consider safe area insets for iOS
+- Make touch targets at least 44x44 points
+
+### Navigation
+- Use Expo Router for all navigation
+- Use `<Link>` component for navigation links
+- Use `router.push()` for programmatic navigation
+- Use `useLocalSearchParams()` for route parameters
+- Define layouts in `_layout.tsx` files
+
+### State Management
+- Use `useState` for local component state
+- Use `useReducer` for complex local state
+- Consider Zustand for global state (if needed)
+- Avoid prop drilling - use context or state management
+- Keep state as local as possible
+
+### Data Fetching
+- Use React Query or SWR for API calls (if needed)
+- Handle loading and error states
+- Consider offline behavior
+- Cache appropriately
+
+### Error Handling
+- Always handle errors gracefully
+- Show user-friendly error messages
+- Log errors for debugging
+- Provide fallback UI for error states
+
+### Mobile Best Practices
+- Design for touch interactions (no hover states)
+- Use appropriate keyboard types for inputs
+- Handle keyboard avoidance
+- Support both iOS and Android
+- Consider different screen sizes
+- Test on both platforms
+- Use haptic feedback appropriately
+- Follow platform-specific design guidelines
+
+### Performance
+- Use `React.memo()` for expensive components
+- Use `useMemo()` and `useCallback()` judiciously
+- Optimize images (use Expo's Image component)
+- Avoid unnecessary re-renders
+- Use FlatList/SectionList for long lists (not ScrollView)
+
+## Code Examples
+
+### Component Template
+```typescript
+import { StyleSheet } from 'react-native';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+
+interface MyComponentProps {
+  title: string;
+  description?: string;
+  onPress?: () => void;
+}
+
+export function MyComponent({ 
+  title, 
+  description, 
+  onPress 
+}: MyComponentProps) {
+  return (
+    <ThemedView style={styles.container}>
+      <ThemedText type="title">{title}</ThemedText>
+      {description && (
+        <ThemedText type="default">{description}</ThemedText>
+      )}
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    gap: 8,
+  },
+});
+```
+
+### Screen Template (Expo Router)
+```typescript
+import { StyleSheet } from 'react-native';
+import { Stack } from 'expo-router';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+
+export default function MyScreen() {
+  return (
+    <>
+      <Stack.Screen options={{ title: 'My Screen' }} />
+      <ThemedView style={styles.container}>
+        <ThemedText>Content</ThemedText>
+      </ThemedView>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+});
+```
+
+### Custom Hook Template
+```typescript
+import { useState, useEffect } from 'react';
+
+interface UseDataResult<T> {
+  data: T | null;
+  loading: boolean;
+  error: Error | null;
+}
+
+export function useData<T>(url: string): UseDataResult<T> {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    // Fetch logic here
+  }, [url]);
+
+  return { data, loading, error };
+}
+```
+
+## File Naming
+- Components: PascalCase (e.g., `UserProfile.tsx`)
+- Hooks: camelCase with 'use' prefix (e.g., `useAuth.ts`)
+- Utilities: camelCase (e.g., `formatDate.ts`)
+- Screens: lowercase with hyphens (e.g., `user-profile.tsx`) or index.tsx in folder
+- Types: PascalCase with `.types.ts` suffix (e.g., `User.types.ts`)
+
+## Imports
+- Group imports: React, React Native, third-party, local
+- Use path aliases: `@/` for root-level imports
+- Import types with `import type` when possible
+
+```typescript
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
+
+import { ThemedView } from '@/components/themed-view';
+import { useAuth } from '@/hooks/useAuth';
+import type { User } from '@/types/user';
+```
+
+## Testing Considerations
+- Ensure code is testable (pure functions, small components)
+- Consider edge cases
+- Handle null/undefined values
+- Test on multiple screen sizes
+- Test light and dark modes
+- Test on iOS and Android
+
+## Comments
+- Write self-documenting code (clear variable/function names)
+- Add comments for complex logic or non-obvious decisions
+- Use JSDoc for public APIs
+- Explain "why" not "what" in comments
+
+## Don'ts
+- Don't use `var` - use `const` or `let`
+- Don't use `any` type in TypeScript
+- Don't use index as key in lists (unless absolutely necessary)
+- Don't mutate state directly - use setState
+- Don't forget to clean up effects (return cleanup function)
+- Don't use inline styles unless necessary (use StyleSheet)
+- Don't ignore TypeScript errors
+- Don't commit console.logs (use proper debugging)
+- Don't hardcode values - use constants
+- Don't forget accessibility (add labels, test with screen readers)
+
+## Accessibility
+- Add `accessibilityLabel` to interactive elements
+- Use `accessibilityRole` appropriately
+- Support screen readers
+- Ensure sufficient color contrast
+- Make touch targets large enough
+- Support dynamic type sizes
+
+## Security
+- Never commit API keys or secrets
+- Use environment variables for sensitive data
+- Validate user input
+- Sanitize data before display
+- Use HTTPS for API calls
+
+## Git Commits
+- Use conventional commit format: `type(scope): description`
+- Types: feat, fix, docs, style, refactor, test, chore
+- Keep commits focused and atomic
+- Write clear commit messages
+
+## When Asked to Add Features
+1. Clarify requirements if needed
+2. Consider mobile UX patterns
+3. Check if similar patterns exist in the codebase
+4. Follow existing code style and patterns
+5. Use TypeScript properly
+6. Consider both iOS and Android
+7. Handle loading and error states
+8. Test the feature
+
+## When Debugging
+1. Check TypeScript errors first
+2. Clear Metro cache if needed
+3. Restart development server
+4. Check for common React Native issues
+5. Test on both platforms if possible
+6. Check console logs and error messages

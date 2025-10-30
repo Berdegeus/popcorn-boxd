@@ -1,50 +1,193 @@
-# Welcome to your Expo app 👋
+# Popcorn Boxd 🍿
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application built with Expo. This project is designed to be AI-friendly for development with ChatGPT, Codex, and other AI assistants.
 
-## Get started
+## 📋 Project Overview
 
-1. Install dependencies
+**Tech Stack:**
+- React Native 0.81.5
+- Expo SDK 54
+- TypeScript 5.9
+- Expo Router (file-based routing)
+- React 19.1.0
 
-   ```bash
-   npm install
-   ```
+**Purpose:** AI-assisted mobile app development from scratch
 
-2. Start the app
+## 🚀 Quick Start
 
-   ```bash
-   npx expo start
-   ```
+### Prerequisites
+- Node.js (LTS version recommended)
+- npm or yarn
+- Expo Go app (for testing on physical devices)
+- Xcode (for iOS development on macOS)
+- Android Studio (for Android development)
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+```
+
+### Development Commands
+
+```bash
+# Start with specific platform
+npm run android    # Open on Android emulator/device
+npm run ios        # Open on iOS simulator/device
+npm run web        # Open in web browser
+
+# Code quality
+npm run lint       # Run ESLint
+npm run typecheck  # Run TypeScript type checking
+
+# Reset to blank project
 npm run reset-project
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 📁 Project Structure
 
-## Learn more
+```
+popcorn-boxd/
+├── app/                    # Main application code (Expo Router)
+│   ├── (tabs)/            # Tab-based navigation screens
+│   │   ├── _layout.tsx    # Tab navigator layout
+│   │   ├── index.tsx      # Home screen
+│   │   └── explore.tsx    # Explore screen
+│   ├── _layout.tsx        # Root layout
+│   └── modal.tsx          # Example modal screen
+├── components/            # Reusable React components
+│   ├── ui/               # UI-specific components
+│   ├── themed-text.tsx   # Theme-aware Text component
+│   └── themed-view.tsx   # Theme-aware View component
+├── constants/            # App constants and configurations
+│   └── theme.ts          # Theme colors and values
+├── hooks/                # Custom React hooks
+│   ├── use-color-scheme.ts
+│   └── use-theme-color.ts
+├── assets/               # Images, fonts, and other static files
+│   └── images/          # Image assets
+├── scripts/              # Build and utility scripts
+├── docs/                 # Project documentation (AI context)
+└── package.json          # Dependencies and scripts
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## 🎨 Architecture & Patterns
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### File-Based Routing
+This project uses [Expo Router](https://docs.expo.dev/router/introduction/) for navigation:
+- Files in `app/` directory automatically become routes
+- `_layout.tsx` files define navigation structure
+- `(tabs)` creates a tab navigator group
+- Route parameters: `app/user/[id].tsx` → `/user/123`
 
-## Join the community
+### Component Structure
+- **Themed Components**: Use `themed-text.tsx` and `themed-view.tsx` for automatic dark/light mode support
+- **Custom Hooks**: Leverage `useColorScheme()` and `useThemeColor()` for theme consistency
+- **UI Components**: Place reusable UI elements in `components/ui/`
 
-Join our community of developers creating universal apps.
+### Styling
+- Use StyleSheet.create() for performance
+- Define theme colors in `constants/theme.ts`
+- Support both light and dark modes
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🤖 AI Development Guidelines
+
+### When Building Features:
+1. **Use TypeScript**: Always type props, state, and return values
+2. **Follow Expo Router conventions**: Place screens in `app/` directory
+3. **Use themed components**: Prefer ThemedText/ThemedView over raw Text/View
+4. **Mobile-first**: Consider touch targets, gestures, and mobile UX patterns
+5. **Cross-platform**: Test on both iOS and Android when possible
+
+### Code Style:
+- Functional components with hooks (no class components)
+- Use arrow functions for component definitions
+- Destructure props in function parameters
+- Keep components small and focused (single responsibility)
+- Use TypeScript interfaces for props
+
+### Common Patterns:
+```typescript
+// Component template
+import { StyleSheet } from 'react-native';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+
+interface MyComponentProps {
+  title: string;
+  onPress?: () => void;
+}
+
+export function MyComponent({ title, onPress }: MyComponentProps) {
+  return (
+    <ThemedView style={styles.container}>
+      <ThemedText>{title}</ThemedText>
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+  },
+});
+```
+
+## 📦 Adding Dependencies
+
+```bash
+# Expo-compatible packages (preferred)
+npx expo install package-name
+
+# Regular npm packages
+npm install package-name
+```
+
+**Note**: Always use `expo install` for Expo SDK packages to ensure version compatibility.
+
+## 🧪 Testing
+
+```bash
+# Run in Expo Go (easiest)
+npm start → scan QR code with Expo Go app
+
+# Run on iOS Simulator
+npm run ios
+
+# Run on Android Emulator
+npm run android
+```
+
+## 🔧 Troubleshooting
+
+```bash
+# Clear cache and restart
+npx expo start --clear
+
+# Reset Metro bundler
+npx expo start --reset-cache
+
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+```
+
+## 📚 Resources
+
+- [Expo Documentation](https://docs.expo.dev/)
+- [React Native Documentation](https://reactnative.dev/)
+- [Expo Router Docs](https://docs.expo.dev/router/introduction/)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+
+## 🎯 Project Goals
+
+This repository is optimized for AI-assisted development. Key objectives:
+- Clear, documented project structure
+- TypeScript for better AI code completion
+- Consistent patterns and conventions
+- Comprehensive inline documentation
+- Easy onboarding for AI coding assistants

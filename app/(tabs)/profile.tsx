@@ -1,10 +1,8 @@
 import { useCallback, useState } from 'react';
 import {
   AccessibilityInfo,
-  ActivityIndicator,
   Alert,
   Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -14,6 +12,7 @@ import { useTheme } from '@react-navigation/native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import placeholderAvatar from '@/assets/images/react-logo.png';
 
@@ -111,41 +110,23 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Pressable
+          <Button
+            label="Editar perfil"
             onPress={handleEditProfile}
-            style={[styles.button, { backgroundColor: theme.colors.primary }]}
-            accessibilityRole="button"
             accessibilityLabel="Editar perfil"
             accessibilityHint="Exibe uma mensagem informando sobre a disponibilidade futura da edição de perfil"
-            focusable
-          >
-            <ThemedText style={[styles.buttonText, styles.buttonTextLight]}>Editar perfil</ThemedText>
-          </Pressable>
+          />
 
-          <Pressable
+          <Button
+            label="Sair / Trocar usuário"
             onPress={handleLogout}
-            style={[
-              styles.button,
-              styles.outlinedButton,
-              { borderColor: theme.colors.notification ?? theme.colors.text },
-            ]}
-            accessibilityRole="button"
+            loading={isSigningOut}
+            disabled={isSigningOut}
+            variant="secondary"
+            tone="danger"
             accessibilityLabel="Encerrar sessão"
             accessibilityHint="Finaliza sua sessão atual e retorna à tela de login"
-            accessibilityState={{ disabled: isSigningOut, busy: isSigningOut }}
-            disabled={isSigningOut}
-            focusable
-          >
-            {isSigningOut ? (
-              <ActivityIndicator color={theme.colors.notification ?? '#ff3b30'} />
-            ) : (
-              <ThemedText
-                style={[styles.buttonText, { color: theme.colors.notification ?? '#ff3b30' }]}
-              >
-                Sair / Trocar usuário
-              </ThemedText>
-            )}
-          </Pressable>
+          />
         </View>
       </ScrollView>
     </ThemedView>
@@ -192,23 +173,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: 16,
-  },
-  button: {
-    borderRadius: 999,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonTextLight: {
-    color: '#ffffff',
-  },
-  outlinedButton: {
-    borderWidth: 1,
-    backgroundColor: 'transparent',
   },
   fallbackContainer: {
     flex: 1,

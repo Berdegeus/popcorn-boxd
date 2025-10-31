@@ -12,6 +12,7 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { FormMessage } from '@/components/ui/form-message';
 import { useWatchedMovies } from '@/context/WatchedMoviesContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -48,6 +49,7 @@ export default function MovieDetailsScreen() {
   const { getWatchedMovie, saveWatchedMovie } = useWatchedMovies();
   const [userRating, setUserRating] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const posterBorderColor = useThemeColor({ light: '#E5E7EB', dark: '#374151' }, 'background');
   const starSelectedColor = useThemeColor({ light: '#F97316', dark: '#F59E0B' }, 'tint');
@@ -93,6 +95,7 @@ export default function MovieDetailsScreen() {
 
   const handleSelectRating = useCallback((value: number) => {
     setUserRating(value);
+    setSaveStatus(null);
   }, []);
 
   const handleSave = useCallback(() => {
@@ -108,6 +111,7 @@ export default function MovieDetailsScreen() {
 
     try {
       setIsSaving(true);
+      setSaveStatus(null);
       saveWatchedMovie({
         id: movieId,
         title,
@@ -117,16 +121,19 @@ export default function MovieDetailsScreen() {
         releaseDate,
         userRating,
       });
-      void AccessibilityInfo.announceForAccessibility(
-        'Filme salvo na lista de assistidos com a sua avaliação.',
-      );
+      const successMessage = savedMovie
+        ? 'Avaliação atualizada com sucesso.'
+        : 'Filme salvo na lista de assistidos.';
+      setSaveStatus({ type: 'success', message: successMessage });
+      void AccessibilityInfo.announceForAccessibility(successMessage);
     } catch (error) {
       console.error('Falha ao salvar filme assistido', error);
       Alert.alert('Erro ao salvar', 'Não foi possível salvar o filme nos assistidos.');
+      setSaveStatus({ type: 'error', message: 'Não foi possível salvar o filme. Tente novamente.' });
     } finally {
       setIsSaving(false);
     }
-  }, [movieId, overview, releaseDate, saveWatchedMovie, title, userRating, voteAverage, posterPath]);
+  }, [movieId, overview, releaseDate, saveWatchedMovie, title, userRating, voteAverage, posterPath, savedMovie]);
 
   const releaseYear = useMemo(() => getReleaseYear(releaseDate), [releaseDate]);
 
@@ -168,11 +175,7 @@ export default function MovieDetailsScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title }} />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        accessibilityRole="scrollbar"
-        accessibilityLabel={`Detalhes do filme ${title}`}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} accessibilityLabel={`Detalhes do filme ${title}`}>
         <View style={styles.posterContainer}>
           {posterSource ? (
             <Image
@@ -272,6 +275,14 @@ export default function MovieDetailsScreen() {
           </ThemedText>
         </Pressable>
 
+        {saveStatus ? (
+          <FormMessage
+            message={saveStatus.message}
+            variant={saveStatus.type}
+            style={styles.saveStatus}
+          />
+        ) : null}
+
         {savedMovie ? (
           <ThemedText style={[styles.savedInfoText, { color: captionColor }]} accessibilityRole="text">
             Última atualização em {new Date(savedMovie.savedAt).toLocaleDateString()} com nota {savedMovie.userRating}.
@@ -287,8 +298,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 32,
-    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
   },
   posterContainer: {
     alignItems: 'center',
@@ -365,6 +376,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  saveStatus: {
+    marginBottom: 16,
   },
   savedInfoText: {
     fontSize: 14,

@@ -6,7 +6,6 @@ import {
   FlatList,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 
@@ -14,6 +13,7 @@ import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { TextField } from '@/components/ui/text-field';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 export type MovieResult = {
@@ -97,11 +97,9 @@ export default function MovieSearchScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const searchInputId = useMemo(() => 'movie-search-input', []);
   const apiKey = process.env.EXPO_PUBLIC_TMDB_API_KEY;
 
   const inputBorderColor = useThemeColor({ light: '#D1D5DB', dark: '#3F3F46' }, 'icon');
-  const placeholderColor = useThemeColor({ light: '#9CA3AF', dark: '#6B7280' }, 'icon');
   const cardBackgroundColor = useThemeColor({ light: '#F9FAFB', dark: '#1F2937' }, 'background');
   const buttonBackgroundColor = useThemeColor({ light: '#0A7EA4', dark: '#1D9BF0' }, 'tint');
 
@@ -344,19 +342,13 @@ export default function MovieSearchScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.searchContainer}>
-        <ThemedText nativeID={searchInputId} style={styles.label}>
-          Buscar por título
-        </ThemedText>
-        <TextInput
+        <TextField
+          label="Buscar por título"
           value={query}
           onChangeText={setQuery}
           placeholder="Digite o nome do filme"
           returnKeyType="search"
-          accessibilityLabel="Campo de busca de filmes"
           accessibilityHint="Digite pelo menos três letras para iniciar a busca"
-          accessibilityLabelledBy={searchInputId}
-          style={[styles.input, { borderColor: inputBorderColor }]}
-          placeholderTextColor={placeholderColor}
           autoCapitalize="none"
           autoCorrect={false}
         />
@@ -411,22 +403,11 @@ function getReleaseYear(releaseDate?: string) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   searchContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    marginBottom: 24,
   },
   statusContainer: {
     alignItems: 'center',
@@ -442,7 +423,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   listContent: {
-    paddingBottom: 48,
+    paddingBottom: 64,
   },
   headerContainer: {
     marginBottom: 12,

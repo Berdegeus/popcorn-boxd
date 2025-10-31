@@ -1,8 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -10,20 +9,19 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
+import { FormMessage } from '@/components/ui/form-message';
+import { TextField } from '@/components/ui/text-field';
 import { useAuth } from '@/context/AuthContext';
-import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function SignUpScreen() {
   const router = useRouter();
   const { signUp } = useAuth();
-  const tintColor = useThemeColor({}, 'tint');
-  const mutedColor = useThemeColor({}, 'icon');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -31,6 +29,9 @@ export default function SignUpScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const emailInputRef = useRef<TextInput | null>(null);
+  const passwordInputRef = useRef<TextInput | null>(null);
 
   const handlePickFromLibrary = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -76,6 +77,11 @@ export default function SignUpScreen() {
     const normalizedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
+    if (!trimmedName || !normalizedEmail || !trimmedPassword) {
+      setErrorMessage('Preencha nome, e-mail e senha para concluir seu cadastro.');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage('');
 
@@ -104,6 +110,12 @@ export default function SignUpScreen() {
   const handleNavigateToLogin = () => {
     router.replace('/(auth)/login');
   };
+
+  const isSubmitDisabled = useMemo(() => {
+    return (
+      name.trim().length === 0 || email.trim().length === 0 || password.trim().length === 0 || isSubmitting
+    );
+  }, [email, isSubmitting, name, password]);
 
   return (
     <KeyboardAvoidingView
@@ -135,96 +147,87 @@ export default function SignUpScreen() {
             )}
 
             <View style={styles.photoButtons}>
-              <TouchableOpacity
+              <Button
+                label="Galeria"
                 onPress={handlePickFromLibrary}
+                variant="secondary"
+                fullWidth={false}
                 style={styles.photoButton}
-                accessibilityRole="button"
                 accessibilityLabel="Selecionar foto da galeria"
-              >
-                <ThemedText style={styles.photoButtonText}>Galeria</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
+              />
+              <Button
+                label="Câmera"
                 onPress={handleOpenCamera}
+                variant="secondary"
+                fullWidth={false}
                 style={styles.photoButton}
-                accessibilityRole="button"
                 accessibilityLabel="Tirar foto com a câmera"
-              >
-                <ThemedText style={styles.photoButtonText}>Câmera</ThemedText>
-              </TouchableOpacity>
+              />
             </View>
           </View>
 
-          <View style={styles.field}>
-            <ThemedText style={styles.label}>Nome completo</ThemedText>
-            <TextInput
+          <View style={styles.fieldsGroup}>
+            <TextField
+              label="Nome completo"
               value={name}
               onChangeText={setName}
               placeholder="Seu nome"
-              placeholderTextColor={mutedColor}
-              accessibilityLabel="Campo de nome"
-              style={styles.input}
               textContentType="name"
+              returnKeyType="next"
+              onSubmitEditing={() => {
+                emailInputRef.current?.focus?.();
+              }}
+              blurOnSubmit={false}
             />
-          </View>
 
-          <View style={styles.field}>
-            <ThemedText style={styles.label}>E-mail</ThemedText>
-            <TextInput
+            <TextField
+              ref={emailInputRef}
+              label="E-mail"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
               placeholder="seu@email.com"
-              placeholderTextColor={mutedColor}
-              accessibilityLabel="Campo de e-mail"
-              style={styles.input}
               textContentType="emailAddress"
+              returnKeyType="next"
+              onSubmitEditing={() => {
+                passwordInputRef.current?.focus?.();
+              }}
+              blurOnSubmit={false}
             />
-          </View>
 
-          <View style={styles.field}>
-            <ThemedText style={styles.label}>Senha</ThemedText>
-            <TextInput
+            <TextField
+              ref={passwordInputRef}
+              label="Senha"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
               placeholder="Crie uma senha"
-              placeholderTextColor={mutedColor}
-              accessibilityLabel="Campo de senha"
-              style={styles.input}
               textContentType="newPassword"
+              returnKeyType="done"
+              onSubmitEditing={handleSignUp}
             />
           </View>
 
           {errorMessage ? (
-            <ThemedText style={styles.error} accessibilityLiveRegion="polite">
-              {errorMessage}
-            </ThemedText>
+            <FormMessage message={errorMessage} variant="error" />
           ) : null}
 
-          <TouchableOpacity
+          <Button
+            label="Cadastrar"
             onPress={handleSignUp}
-            style={[styles.primaryButton, { backgroundColor: tintColor }]}
-            accessibilityRole="button"
+            loading={isSubmitting}
+            disabled={isSubmitDisabled}
             accessibilityLabel="Concluir cadastro"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <ThemedText style={styles.primaryButtonText}>Cadastrar</ThemedText>
-            )}
-          </TouchableOpacity>
+          />
 
-          <TouchableOpacity
+          <Button
+            label="Já tenho conta"
             onPress={handleNavigateToLogin}
-            style={styles.secondaryButton}
-            accessibilityRole="button"
+            variant="secondary"
             accessibilityLabel="Voltar para a tela de login"
-          >
-            <ThemedText style={styles.secondaryButtonText}>Já tenho conta</ThemedText>
-          </TouchableOpacity>
+          />
         </ThemedView>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -241,7 +244,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    gap: 16,
+    gap: 24,
   },
   title: {
     textAlign: 'center',
@@ -268,57 +271,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   photoButton: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
+    flex: 1,
   },
-  photoButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  field: {
-    gap: 8,
-  },
-  label: {
-    fontWeight: '600',
-  },
-  input: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    paddingHorizontal: 16,
-    minHeight: 48,
-    fontSize: 16,
-  },
-  error: {
-    color: '#DC2626',
-    fontSize: 14,
-  },
-  primaryButton: {
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  fieldsGroup: {
+    gap: 16,
   },
 });

@@ -1,28 +1,26 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
+import { FormMessage } from '@/components/ui/form-message';
+import { TextField } from '@/components/ui/text-field';
 import { useAuth } from '@/context/AuthContext';
-import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { status: statusParam } = useLocalSearchParams<{ status?: string }>();
   const { signIn } = useAuth();
-  const tintColor = useThemeColor({}, 'tint');
-  const mutedColor = useThemeColor({}, 'icon');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,6 +36,8 @@ export default function LoginScreen() {
   useEffect(() => {
     setFeedbackMessage(signOutFeedbackMessage);
   }, [signOutFeedbackMessage]);
+
+  const passwordInputRef = useRef<TextInput | null>(null);
 
   const handleLogin = async () => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -75,6 +75,10 @@ export default function LoginScreen() {
     router.push('/(auth)/signup');
   };
 
+  const isSubmitDisabled = useMemo(() => {
+    return email.trim().length === 0 || password.trim().length === 0 || isSubmitting;
+  }, [email, isSubmitting, password]);
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -86,74 +90,58 @@ export default function LoginScreen() {
             Bem-vindo de volta
           </ThemedText>
 
-          <View style={styles.field}>
-            <ThemedText style={styles.label}>E-mail</ThemedText>
-            <TextInput
+          <View style={styles.fieldsGroup}>
+            <TextField
+              label="E-mail"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
               placeholder="seu@email.com"
-              placeholderTextColor={mutedColor}
-              accessibilityLabel="Campo de e-mail"
-              style={styles.input}
               textContentType="emailAddress"
+              returnKeyType="next"
+              onSubmitEditing={() => {
+                passwordInputRef.current?.focus?.();
+              }}
+              blurOnSubmit={false}
             />
-          </View>
 
-          <View style={styles.field}>
-            <ThemedText style={styles.label}>Senha</ThemedText>
-            <TextInput
+            <TextField
+              ref={passwordInputRef}
+              label="Senha"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
               placeholder="Sua senha"
-              placeholderTextColor={mutedColor}
-              accessibilityLabel="Campo de senha"
-              style={styles.input}
               textContentType="password"
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
             />
           </View>
 
           {feedbackMessage ? (
-            <ThemedText
-              style={styles.feedback}
-              accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
-            >
-              {feedbackMessage}
-            </ThemedText>
+            <FormMessage message={feedbackMessage} variant="success" style={styles.messageSpacing} />
           ) : null}
 
           {errorMessage ? (
-            <ThemedText style={styles.error} accessibilityLiveRegion="polite">
-              {errorMessage}
-            </ThemedText>
+            <FormMessage message={errorMessage} variant="error" style={styles.messageSpacing} />
           ) : null}
 
-          <TouchableOpacity
+          <Button
+            label="Entrar"
             onPress={handleLogin}
-            style={[styles.primaryButton, { backgroundColor: tintColor }]}
-            accessibilityRole="button"
+            loading={isSubmitting}
+            disabled={isSubmitDisabled}
             accessibilityLabel="Entrar na conta"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <ThemedText style={styles.primaryButtonText}>Entrar</ThemedText>
-            )}
-          </TouchableOpacity>
+          />
 
-          <TouchableOpacity
+          <Button
+            label="Criar conta"
             onPress={handleNavigateToSignUp}
-            style={styles.secondaryButton}
-            accessibilityRole="button"
+            variant="secondary"
             accessibilityLabel="Ir para tela de cadastro"
-          >
-            <ThemedText style={styles.secondaryButtonText}>Criar conta</ThemedText>
-          </TouchableOpacity>
+          />
         </ThemedView>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -171,56 +159,15 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     justifyContent: 'center',
-    gap: 16,
+    gap: 24,
   },
   title: {
     textAlign: 'center',
   },
-  field: {
-    gap: 8,
+  fieldsGroup: {
+    gap: 16,
   },
-  label: {
-    fontWeight: '600',
-  },
-  input: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    paddingHorizontal: 16,
-    minHeight: 48,
-    fontSize: 16,
-  },
-  error: {
-    color: '#DC2626',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  feedback: {
-    color: '#16A34A',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  primaryButton: {
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  messageSpacing: {
+    marginTop: -4,
   },
 });

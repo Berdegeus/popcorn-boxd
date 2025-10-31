@@ -14,12 +14,12 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useAuth } from '@/context/AuthContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { findUserByEmail, setCurrentUser } from '@/storage/auth';
-import { isPasswordValid } from '@/utils/password';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { signIn } = useAuth();
   const tintColor = useThemeColor({}, 'tint');
   const mutedColor = useThemeColor({}, 'icon');
 
@@ -41,17 +41,16 @@ export default function LoginScreen() {
     setErrorMessage('');
 
     try {
-      const storedUser = await findUserByEmail(normalizedEmail);
-
-      if (!storedUser || !isPasswordValid(trimmedPassword, storedUser.passwordHash)) {
-        setErrorMessage('Credenciais inválidas. Tente novamente.');
-        return;
-      }
-
-      await setCurrentUser(storedUser);
+      await signIn({ email: normalizedEmail, password: trimmedPassword });
       router.replace('/(tabs)');
     } catch (error) {
       console.error('Failed to sign in', error);
+
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+        return;
+      }
+
       Alert.alert('Erro', 'Não foi possível realizar o login. Tente novamente.');
     } finally {
       setIsSubmitting(false);

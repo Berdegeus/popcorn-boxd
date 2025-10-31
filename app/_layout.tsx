@@ -1,35 +1,34 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider, useTheme } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { getCurrentUser } from '@/storage/auth';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-type InitialRoute = '(auth)' | '(tabs)';
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [isReady, setIsReady] = useState(false);
-  const [initialRoute, setInitialRoute] = useState<InitialRoute>('(auth)');
-
-  useEffect(() => {
-    async function prepare() {
-      const storedUser = await getCurrentUser();
-      setInitialRoute(storedUser ? '(tabs)' : '(auth)');
-      setIsReady(true);
-    }
-
-    void prepare();
-  }, []);
-
   const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+
+  return (
+    <AuthProvider>
+      <ThemeProvider value={theme}>
+        <RootNavigator />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </AuthProvider>
+  );
+}
+
+function RootNavigator() {
+  const { isSessionLoading, user } = useAuth();
+  const theme = useTheme();
 
   const loadingView = useMemo(
     () => (
@@ -49,18 +48,15 @@ export default function RootLayout() {
     [theme.colors.background, theme.colors.primary],
   );
 
+  if (isSessionLoading) {
+    return loadingView;
+  }
+
   return (
-    <ThemeProvider value={theme}>
-      {isReady ? (
-        <Stack initialRouteName={initialRoute}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-      ) : (
-        loadingView
-      )}
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack initialRouteName={user ? '(tabs)' : '(auth)'} key={user ? 'authenticated' : 'guest'}>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    </Stack>
   );
 }

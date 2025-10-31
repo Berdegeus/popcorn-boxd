@@ -16,12 +16,12 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useAuth } from '@/context/AuthContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { addStoredUser, findUserByEmail } from '@/storage/auth';
-import { createPasswordHash } from '@/utils/password';
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { signUp } = useAuth();
   const tintColor = useThemeColor({}, 'tint');
   const mutedColor = useThemeColor({}, 'icon');
 
@@ -76,46 +76,26 @@ export default function SignUpScreen() {
     const normalizedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
-    if (!trimmedName || !normalizedEmail || !trimmedPassword) {
-      setErrorMessage('Preencha todos os campos para continuar.');
-      return;
-    }
-
-    if (!imageUri) {
-      setErrorMessage('Selecione uma foto de perfil.');
-      return;
-    }
-
-    const emailPattern = /\S+@\S+\.\S+/;
-
-    if (!emailPattern.test(normalizedEmail)) {
-      setErrorMessage('Informe um e-mail válido.');
-      return;
-    }
-
     setIsSubmitting(true);
     setErrorMessage('');
 
     try {
-      const userExists = await findUserByEmail(normalizedEmail);
-
-      if (userExists) {
-        setErrorMessage('Este e-mail já está cadastrado.');
-        return;
-      }
-
-      await addStoredUser({
+      await signUp({
         email: normalizedEmail,
         name: trimmedName,
-        passwordHash: createPasswordHash(trimmedPassword),
+        password: trimmedPassword,
         imageUri,
       });
 
-      Alert.alert('Cadastro concluído', 'Sua conta foi criada com sucesso! Faça login para continuar.');
-      router.replace('/(auth)/login');
+      Alert.alert('Cadastro concluído', 'Sua conta foi criada com sucesso!');
+      router.replace('/(tabs)');
     } catch (error) {
       console.error('Failed to create account', error);
-      Alert.alert('Erro', 'Não foi possível concluir o cadastro. Tente novamente.');
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        Alert.alert('Erro', 'Não foi possível concluir o cadastro. Tente novamente.');
+      }
     } finally {
       setIsSubmitting(false);
     }

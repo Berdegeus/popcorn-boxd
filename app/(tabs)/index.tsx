@@ -1,13 +1,35 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Link, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Platform, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const { signOut } = useAuth();
+  const tintColor = useThemeColor({}, 'tint');
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+
+    try {
+      await signOut();
+      router.replace('/(auth)/login');
+    } catch (error) {
+      console.error('Failed to sign out', error);
+      Alert.alert('Erro', 'Não foi possível sair da conta. Tente novamente.');
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -74,6 +96,19 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
+      <ThemedView style={styles.logoutContainer}>
+        <TouchableOpacity
+          onPress={handleSignOut}
+          style={[styles.logoutButton, { backgroundColor: tintColor }]}
+          accessibilityRole="button"
+          accessibilityLabel="Sair da conta"
+          disabled={isSigningOut}
+        >
+          <ThemedText style={styles.logoutButtonText}>
+            {isSigningOut ? 'Saindo...' : 'Sair'}
+          </ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
     </ParallaxScrollView>
   );
 }
@@ -94,5 +129,19 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  logoutContainer: {
+    marginTop: 16,
+  },
+  logoutButton: {
+    borderRadius: 12,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

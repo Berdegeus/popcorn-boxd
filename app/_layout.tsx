@@ -6,6 +6,7 @@ import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { WatchedMoviesProvider } from '@/context/WatchedMoviesContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
@@ -18,10 +19,12 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <ThemeProvider value={theme}>
-        <RootNavigator />
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <WatchedMoviesProvider>
+        <ThemeProvider value={theme}>
+          <RootNavigator />
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </WatchedMoviesProvider>
     </AuthProvider>
   );
 }
@@ -72,6 +75,7 @@ function AppStackNavigator() {
     <Stack key="app-stack" initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+      <Stack.Screen name="movie/[id]" options={{ headerShown: true, title: 'Detalhes do filme' }} />
     </Stack>
   );
 }

@@ -3,13 +3,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AccessibilityInfo,
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
+
+import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -21,6 +22,7 @@ type MovieResult = {
   release_date?: string;
   vote_average?: number;
   poster_path?: string | null;
+  overview?: string;
 };
 
 type SearchResponse = {
@@ -31,6 +33,7 @@ const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w185';
 const DEBOUNCE_IN_MS = 500;
 
 export default function MovieSearchScreen() {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<MovieResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,10 +55,25 @@ export default function MovieSearchScreen() {
     }
   }, []);
 
-  const handleMovieDetails = useCallback((movie: MovieResult) => {
-    const releaseYear = getReleaseYear(movie.release_date) ?? '—';
-    Alert.alert('Detalhes do filme', `${movie.title}\nLançamento: ${releaseYear}`);
-  }, []);
+  const handleMovieDetails = useCallback(
+    (movie: MovieResult) => {
+      router.push({
+        pathname: '/movie/[id]',
+        params: {
+          id: movie.id.toString(),
+          title: movie.title,
+          releaseDate: movie.release_date ?? '',
+          voteAverage:
+            typeof movie.vote_average === 'number' && Number.isFinite(movie.vote_average)
+              ? movie.vote_average.toString()
+              : '',
+          posterPath: movie.poster_path ?? '',
+          overview: movie.overview ?? '',
+        },
+      });
+    },
+    [router],
+  );
 
   const handleSearch = useCallback(
     async (term: string) => {

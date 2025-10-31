@@ -1,4 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useTheme } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   AccessibilityInfo,
   Alert,
@@ -7,14 +9,12 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useTheme } from '@react-navigation/native';
 
+import placeholderAvatar from '@/assets/images/react-logo.png';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import placeholderAvatar from '@/assets/images/react-logo.png';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -52,14 +52,31 @@ export default function ProfileScreen() {
     }
   }, [isSigningOut, router, signOut]);
 
+  useEffect(() => {
+    // Announce to screen readers when there's no authenticated user on this screen
+    if (!user) {
+      const msg = 'Você não está autenticado. Redirecionando para a tela de login.';
+      void AccessibilityInfo.announceForAccessibility(msg);
+
+      // give the announcement a moment to be spoken, then redirect to login
+      const t = setTimeout(() => {
+        router.replace({ pathname: '/(auth)/login', params: { status: 'signed-out' } });
+      }, 250);
+
+      return () => clearTimeout(t);
+    }
+  }, [user]);
+
   if (!user) {
+    // while the redirect happens show a brief fallback so the screen isn't blank
     return (
-      <ThemedView style={styles.fallbackContainer} accessibilityLabel="Perfil indisponível">
+      <ThemedView style={styles.fallbackContainer} accessibilityLabel="Redirecionando para login">
         <ThemedText accessibilityRole="header" type="title" style={styles.fallbackTitle}>
           Perfil
         </ThemedText>
-        <ThemedText style={styles.fallbackMessage}>
-          Não foi possível carregar os dados do usuário.
+
+        <ThemedText style={styles.fallbackMessage} accessibilityRole="text">
+          Você não está autenticado. Redirecionando para a tela de login...
         </ThemedText>
       </ThemedView>
     );

@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -12,7 +12,9 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
 import { FormMessage } from '@/components/ui/form-message';
+import { useAuth } from '@/context/AuthContext';
 import { useWatchedMovies } from '@/context/WatchedMoviesContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -47,6 +49,8 @@ function getReleaseYear(releaseDate?: string) {
 export default function MovieDetailsScreen() {
   const params = useLocalSearchParams<MovieDetailsParams>();
   const { getWatchedMovie, saveWatchedMovie } = useWatchedMovies();
+  const { user } = useAuth();
+  const router = useRouter();
   const [userRating, setUserRating] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -99,6 +103,12 @@ export default function MovieDetailsScreen() {
   }, []);
 
   const handleSave = useCallback(() => {
+    if (!user) {
+      const msg = 'Você precisa entrar para salvar avaliações.';
+      setSaveStatus({ type: 'error', message: msg });
+      void AccessibilityInfo.announceForAccessibility(msg);
+      return;
+    }
     if (!movieId) {
       Alert.alert('Não foi possível salvar', 'Identificador do filme inválido.');
       return;
@@ -254,6 +264,17 @@ export default function MovieDetailsScreen() {
             })}
           </View>
         </View>
+
+        {/* Show login button when not authenticated */}
+        {!user ? (
+          <Button
+            label="Entrar para salvar"
+            onPress={() => router.push('/(auth)/login')}
+            variant="secondary"
+            accessibilityLabel="Entrar para salvar avaliações"
+            accessibilityHint="Abre a tela de login para que você possa salvar avaliações"
+          />
+        ) : null}
 
         <Pressable
           onPress={handleSave}

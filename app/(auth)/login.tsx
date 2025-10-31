@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -55,8 +56,15 @@ export default function LoginScreen() {
     }
 
     try {
-      await signIn({ email: normalizedEmail, password: trimmedPassword });
-      router.replace('/(tabs)');
+        await signIn({ email: normalizedEmail, password: trimmedPassword });
+        // announce success for screen readers before navigating
+        try {
+          await AccessibilityInfo.announceForAccessibility('Login realizado com sucesso.');
+        } catch (announceError) {
+          // ignore announce failures
+          console.debug('announceForAccessibility failed', announceError);
+        }
+        router.replace('/(tabs)');
     } catch (error) {
       console.error('Failed to sign in', error);
 

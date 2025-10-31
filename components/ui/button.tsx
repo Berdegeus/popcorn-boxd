@@ -80,6 +80,7 @@ export const Button = forwardRef<PressableRef, ButtonProps>(
 
     return (
       <Pressable
+        accessible={true}
         ref={ref}
         accessibilityRole={accessibilityRole}
         accessibilityState={{ disabled: isDisabled, busy: loading, ...accessibilityState }}

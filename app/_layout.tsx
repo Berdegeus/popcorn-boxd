@@ -56,7 +56,7 @@ function RootNavigator() {
   }
 
   if (user) {
-    return <AppStackNavigator />;
+    return <AppStackNavigator userId={user.id} />;
   }
 
   return <AuthStackNavigator />;
@@ -70,9 +70,17 @@ function AuthStackNavigator() {
   );
 }
 
-function AppStackNavigator() {
+type AppStackNavigatorProps = {
+  userId: string;
+};
+
+function AppStackNavigator({ userId }: AppStackNavigatorProps) {
   return (
-    <Stack key="app-stack" initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
+    <Stack
+      key={`app-stack-${userId}`}
+      initialRouteName="(tabs)"
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       <Stack.Screen name="movie/[id]" options={{ headerShown: true, title: 'Detalhes do filme' }} />

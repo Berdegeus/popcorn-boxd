@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -19,6 +19,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { status: statusParam } = useLocalSearchParams<{ status?: string }>();
   const { signIn } = useAuth();
   const tintColor = useThemeColor({}, 'tint');
   const mutedColor = useThemeColor({}, 'icon');
@@ -26,7 +27,17 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const normalizedStatus = Array.isArray(statusParam) ? statusParam[0] : statusParam;
+  const signOutFeedbackMessage =
+    normalizedStatus === 'signed-out'
+      ? 'Sessão encerrada com sucesso. Faça login novamente.'
+      : '';
+  const [feedbackMessage, setFeedbackMessage] = useState(signOutFeedbackMessage);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setFeedbackMessage(signOutFeedbackMessage);
+  }, [signOutFeedbackMessage]);
 
   const handleLogin = async () => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -39,6 +50,9 @@ export default function LoginScreen() {
 
     setIsSubmitting(true);
     setErrorMessage('');
+    if (feedbackMessage) {
+      setFeedbackMessage('');
+    }
 
     try {
       await signIn({ email: normalizedEmail, password: trimmedPassword });
@@ -101,6 +115,16 @@ export default function LoginScreen() {
               textContentType="password"
             />
           </View>
+
+          {feedbackMessage ? (
+            <ThemedText
+              style={styles.feedback}
+              accessibilityLiveRegion="polite"
+              accessibilityRole="alert"
+            >
+              {feedbackMessage}
+            </ThemedText>
+          ) : null}
 
           {errorMessage ? (
             <ThemedText style={styles.error} accessibilityLiveRegion="polite">
@@ -169,6 +193,12 @@ const styles = StyleSheet.create({
   error: {
     color: '#DC2626',
     fontSize: 14,
+    marginTop: 4,
+  },
+  feedback: {
+    color: '#16A34A',
+    fontSize: 14,
+    marginTop: 4,
   },
   primaryButton: {
     borderRadius: 12,

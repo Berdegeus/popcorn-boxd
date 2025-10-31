@@ -1,5 +1,15 @@
-import { useCallback } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@react-navigation/native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -8,8 +18,10 @@ import { useAuth } from '@/context/AuthContext';
 import placeholderAvatar from '@/assets/images/react-logo.png';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const theme = useTheme();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleEditProfile = useCallback(() => {
     Alert.alert(
@@ -21,12 +33,25 @@ export default function ProfileScreen() {
   }, []);
 
   const handleLogout = useCallback(async () => {
+    if (isSigningOut) {
+      return;
+    }
+
+    setIsSigningOut(true);
+
     try {
       await signOut();
+      void AccessibilityInfo.announceForAccessibility(
+        'Sessão encerrada com sucesso. Faça login novamente.',
+      );
+      router.replace({ pathname: '/(auth)/login', params: { status: 'signed-out' } });
     } catch (error) {
+      console.error('Failed to sign out user', error);
       Alert.alert('Não foi possível encerrar a sessão', (error as Error).message);
+    } finally {
+      setIsSigningOut(false);
     }
-  }, [signOut]);
+  }, [isSigningOut, router, signOut]);
 
   if (!user) {
     return (
@@ -107,11 +132,19 @@ export default function ProfileScreen() {
             accessibilityRole="button"
             accessibilityLabel="Encerrar sessão"
             accessibilityHint="Finaliza sua sessão atual e retorna à tela de login"
+            accessibilityState={{ disabled: isSigningOut, busy: isSigningOut }}
+            disabled={isSigningOut}
             focusable
           >
-            <ThemedText style={[styles.buttonText, { color: theme.colors.notification ?? '#ff3b30' }]}>
-              Sair
-            </ThemedText>
+            {isSigningOut ? (
+              <ActivityIndicator color={theme.colors.notification ?? '#ff3b30'} />
+            ) : (
+              <ThemedText
+                style={[styles.buttonText, { color: theme.colors.notification ?? '#ff3b30' }]}
+              >
+                Sair / Trocar usuário
+              </ThemedText>
+            )}
           </Pressable>
         </View>
       </ScrollView>

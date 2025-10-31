@@ -115,8 +115,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await setCurrentUser(null);
-    setUser(null);
+    try {
+      await setCurrentUser(null);
+      setUser(null);
+    } catch (error) {
+      console.error('Failed to clear stored session', error);
+      throw new Error('Não foi possível encerrar a sessão. Tente novamente.');
+    }
   }, []);
 
   const value = useMemo(

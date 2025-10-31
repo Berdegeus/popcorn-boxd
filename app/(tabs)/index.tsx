@@ -32,10 +32,68 @@ type SearchResponse = {
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w185';
 const DEBOUNCE_IN_MS = 500;
 
+const TRENDING_MOVIES: MovieResult[] = [
+  {
+    id: 718821,
+    title: 'Rivais',
+    release_date: '2024-04-18',
+    vote_average: 7.3,
+    poster_path: '/nMQ0C7mUyfm2z9TiSKmCM4vSFnu.jpg',
+    overview:
+      'Um triângulo amoroso entre um casal e um antigo amigo muda o rumo de suas vidas dentro e fora das quadras de tênis.',
+  },
+  {
+    id: 653346,
+    title: 'O Homem do Norte',
+    release_date: '2022-04-07',
+    vote_average: 7.1,
+    poster_path: '/zhLKlUaF1SEpO58ppHIAyENkwgw.jpg',
+    overview:
+      'Um príncipe nórdico busca vingança pela morte do pai em uma jornada repleta de visões, batalhas e confrontos sangrentos.',
+  },
+  {
+    id: 914460,
+    title: 'Rebel Moon - Parte 2: A Marcadora de Cicatrizes',
+    release_date: '2024-04-19',
+    vote_average: 6,
+    poster_path: '/oj5E7WDN3B9qbeQLfkc1C01N4Po.jpg',
+    overview:
+      'Os heróis de Veldt se preparam para enfrentar o Império quando forças sombrias ameaçam destruir a nova esperança do universo.',
+  },
+  {
+    id: 1072790,
+    title: 'Imaculada',
+    release_date: '2024-03-20',
+    vote_average: 6.5,
+    poster_path: '/4FkFGDLkzs0tVK0g0eGfzbw05af.jpg',
+    overview:
+      'Uma jovem freira se muda para um remoto convento italiano e descobre que milagres podem esconder um terror inimaginável.',
+  },
+  {
+    id: 787699,
+    title: 'Wonka',
+    release_date: '2023-12-06',
+    vote_average: 7.2,
+    poster_path: '/edY0LnkYZf1tu1pGIQR2g00grIE.jpg',
+    overview:
+      'A origem do excêntrico chocolatier Willy Wonka, um sonhador que planeja abrir a fábrica mais extraordinária do mundo.',
+  },
+  {
+    id: 804717,
+    title: 'A Queda de Lenora',
+    release_date: '2024-04-11',
+    vote_average: 6.4,
+    poster_path: '/7Ixhb6rhdT7nprbHXM9KW0n8Y5m.jpg',
+    overview:
+      'Uma detetive obstinada investiga uma série de crimes em uma cidade costeira onde nada é o que parece.',
+  },
+];
+
 export default function MovieSearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<MovieResult[]>([]);
+  const [suggestions, setSuggestions] = useState<MovieResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -84,6 +142,7 @@ export default function MovieSearchScreen() {
         setResults([]);
         setError(null);
         setIsLoading(false);
+        void announceForAccessibility('Exibindo filmes em destaque.');
         return;
       }
 
@@ -157,6 +216,13 @@ export default function MovieSearchScreen() {
   );
 
   useEffect(() => {
+    setSuggestions(TRENDING_MOVIES);
+    if (TRENDING_MOVIES.length > 0) {
+      void announceForAccessibility('Filmes em destaque carregados. Explore as sugestões disponíveis.');
+    }
+  }, [announceForAccessibility]);
+
+  useEffect(() => {
     const handler = setTimeout(() => {
       void handleSearch(query);
     }, DEBOUNCE_IN_MS);
@@ -227,6 +293,9 @@ export default function MovieSearchScreen() {
 
   const keyExtractor = useCallback((item: MovieResult) => item.id.toString(), []);
 
+  const trimmedQuery = query.trim();
+  const isShowingSuggestions = trimmedQuery.length === 0;
+
   const listHeader = useMemo(
     () => (
       <View style={styles.headerContainer}>
@@ -236,18 +305,27 @@ export default function MovieSearchScreen() {
         <ThemedText style={styles.headerSubtitle}>
           Pesquise por títulos, visualize detalhes e salve suas avaliações pessoais.
         </ThemedText>
+        {isShowingSuggestions ? (
+          <ThemedText style={styles.highlightSubtitle} accessibilityRole="text">
+            Destaques do momento selecionados para você explorar.
+          </ThemedText>
+        ) : null}
       </View>
     ),
-    [],
+    [isShowingSuggestions],
   );
 
   const emptyState = useMemo(() => {
-    if (query.trim().length === 0) {
-      return (
-        <ThemedText style={styles.emptyStateText} accessibilityRole="text">
-          Comece digitando o nome de um filme para ver os resultados da pesquisa.
-        </ThemedText>
-      );
+    if (isShowingSuggestions) {
+      if (suggestions.length === 0) {
+        return (
+          <ThemedText style={styles.emptyStateText} accessibilityRole="text">
+            Não há sugestões disponíveis no momento. Tente buscar por um título específico.
+          </ThemedText>
+        );
+      }
+
+      return null;
     }
 
     if (isLoading || error) {
@@ -259,7 +337,9 @@ export default function MovieSearchScreen() {
         Não encontramos filmes com esse nome. Tente outra busca.
       </ThemedText>
     );
-  }, [error, isLoading, query]);
+  }, [error, isLoading, isShowingSuggestions, suggestions.length]);
+
+  const listData = isShowingSuggestions ? suggestions : results;
 
   return (
     <ThemedView style={styles.container}>
@@ -300,7 +380,7 @@ export default function MovieSearchScreen() {
       ) : null}
 
       <FlatList
-        data={results}
+        data={listData}
         keyExtractor={keyExtractor}
         renderItem={renderMovieItem}
         ItemSeparatorComponent={Separator}
@@ -309,7 +389,9 @@ export default function MovieSearchScreen() {
         ListEmptyComponent={emptyState}
         keyboardShouldPersistTaps="handled"
         accessibilityRole="list"
-        accessibilityLabel="Resultados da busca de filmes"
+        accessibilityLabel={
+          isShowingSuggestions ? 'Sugestões de filmes em destaque' : 'Resultados da busca de filmes'
+        }
       />
     </ThemedView>
   );
@@ -371,6 +453,11 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 16,
     lineHeight: 22,
+  },
+  highlightSubtitle: {
+    fontSize: 16,
+    lineHeight: 22,
+    marginTop: 8,
   },
   emptyStateText: {
     fontSize: 16,

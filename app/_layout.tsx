@@ -52,9 +52,24 @@ function RootNavigator() {
     return loadingView;
   }
 
+  if (user) {
+    return <AppStackNavigator />;
+  }
+
+  return <AuthStackNavigator />;
+}
+
+function AuthStackNavigator() {
   return (
-    <Stack initialRouteName={user ? '(tabs)' : '(auth)'} key={user ? 'authenticated' : 'guest'}>
+    <Stack key="auth-stack" initialRouteName="(auth)" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+
+function AppStackNavigator() {
+  return (
+    <Stack key="app-stack" initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
     </Stack>

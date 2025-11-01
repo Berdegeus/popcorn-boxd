@@ -14,6 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
 import { FormMessage } from '@/components/ui/form-message';
+import { TextField } from '@/components/ui/text-field';
 import { useAuth } from '@/context/AuthContext';
 import { useWatchedMovies } from '@/context/WatchedMoviesContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -52,6 +53,7 @@ export default function MovieDetailsScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const [userRating, setUserRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -94,6 +96,7 @@ export default function MovieDetailsScreen() {
   useEffect(() => {
     if (savedMovie) {
       setUserRating(savedMovie.userRating);
+      setReviewText(savedMovie.review ?? '');
     }
   }, [savedMovie]);
 
@@ -130,6 +133,7 @@ export default function MovieDetailsScreen() {
         voteAverage,
         releaseDate,
         userRating,
+        review: reviewText?.trim() || undefined,
       });
       const successMessage = savedMovie
         ? 'Avaliação atualizada com sucesso.'
@@ -263,6 +267,18 @@ export default function MovieDetailsScreen() {
               );
             })}
           </View>
+
+          {/* Text review input */}
+          <TextField
+            label="Escreva sua avaliação (opcional)"
+            value={reviewText}
+            onChangeText={setReviewText}
+            placeholder="Compartilhe sua opinião sobre o filme"
+            multiline
+            numberOfLines={4}
+            containerStyle={styles.reviewField}
+            accessibilityHint="Campo opcional para escrever uma avaliação em texto"
+          />
         </View>
 
         {/* Show login button when not authenticated */}
@@ -376,16 +392,25 @@ const styles = StyleSheet.create({
   },
   starsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   starButton: {
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 56,
-    minHeight: 56,
+    minHeight: 88,
+    paddingVertical: 8,
+    marginHorizontal: 8,
   },
   starText: {
-    fontSize: 36,
+    fontSize: 48,
+    lineHeight: 56,
+  },
+  reviewField: {
+    marginTop: 12,
+    marginBottom: 8,
   },
   saveButton: {
     borderRadius: 999,

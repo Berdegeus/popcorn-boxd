@@ -153,11 +153,16 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 24,
     gap: 24,
+    minHeight: '100%',
   },
   header: {
     width: '100%',

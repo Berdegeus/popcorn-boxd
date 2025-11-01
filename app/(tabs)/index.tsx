@@ -408,6 +408,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     marginBottom: 24,
+    marginTop: 30
   },
   statusContainer: {
     alignItems: 'center',

@@ -73,7 +73,7 @@ export default function WatchedMoviesScreen() {
 
   const handleOpenMovie = useCallback(
     (movie: WatchedMovie) => {
-      const params: Record<string, string> = {
+      const params: { id: string; [key: string]: string } = {
         id: String(movie.id),
         title: movie.title,
       };
@@ -264,6 +264,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   listHeader: {
+    marginTop: 30,
     marginBottom: 16,
   },
   headerTitle: {

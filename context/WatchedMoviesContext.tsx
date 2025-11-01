@@ -19,6 +19,7 @@ export interface WatchedMovie {
   voteAverage?: number;
   releaseDate?: string;
   userRating: number;
+  review?: string;
   savedAt: string;
 }
 
@@ -30,6 +31,7 @@ interface WatchedMovieInput {
   voteAverage?: number;
   releaseDate?: string;
   userRating: number;
+  review?: string;
 }
 
 interface WatchedMoviesContextValue {
@@ -151,6 +153,7 @@ export function WatchedMoviesProvider({ children }: PropsWithChildren) {
                   voteAverage: movie.voteAverage,
                   releaseDate: movie.releaseDate,
                   userRating: movie.userRating,
+                  review: movie.review,
                   savedAt: timestamp,
                 }
               : item,
@@ -160,6 +163,7 @@ export function WatchedMoviesProvider({ children }: PropsWithChildren) {
             ...previous,
             {
               ...movie,
+              review: movie.review,
               savedAt: timestamp,
             },
           ];

@@ -1,8 +1,8 @@
-import React from 'react';
-import { StyleSheet, View, ViewProps } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, ViewProps } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { makeStyles, useAppTheme } from '@/hooks/useAppTheme';
 
 type FormMessageVariant = 'info' | 'success' | 'error';
 
@@ -12,16 +12,29 @@ type FormMessageProps = ViewProps & {
 };
 
 export function FormMessage({ message, variant = 'info', style, ...rest }: FormMessageProps) {
-  const infoColor = useThemeColor({ light: '#2563EB', dark: '#60A5FA' }, 'tint');
-  const successColor = useThemeColor({ light: '#15803D', dark: '#4ADE80' }, 'tint');
-  const errorColor = useThemeColor({ light: '#B91C1C', dark: '#F87171' }, 'tint');
-  const infoBackground = useThemeColor({ light: '#DBEAFE', dark: '#1E3A8A' }, 'background');
-  const successBackground = useThemeColor({ light: '#DCFCE7', dark: '#14532D' }, 'background');
-  const errorBackground = useThemeColor({ light: '#FEE2E2', dark: '#7F1D1D' }, 'background');
+  const theme = useAppTheme();
+  const styles = useStyles();
 
-  const textColor = variant === 'success' ? successColor : variant === 'error' ? errorColor : infoColor;
-  const backgroundColor =
-    variant === 'success' ? successBackground : variant === 'error' ? errorBackground : infoBackground;
+  const { textColor, backgroundColor } = useMemo(() => {
+    switch (variant) {
+      case 'success':
+        return {
+          textColor: theme.colors.success,
+          backgroundColor: theme.mode === 'dark' ? 'rgba(74, 222, 128, 0.18)' : 'rgba(21, 128, 61, 0.12)',
+        };
+      case 'error':
+        return {
+          textColor: theme.colors.danger,
+          backgroundColor: theme.mode === 'dark' ? 'rgba(248, 113, 113, 0.2)' : 'rgba(185, 28, 28, 0.12)',
+        };
+      default:
+        return {
+          textColor: theme.colors.info,
+          backgroundColor: theme.mode === 'dark' ? 'rgba(96, 165, 250, 0.18)' : 'rgba(29, 78, 216, 0.12)',
+        };
+    }
+  }, [theme, variant]);
+
   const accessibilityRole = variant === 'info' ? 'text' : 'alert';
 
   return (
@@ -36,16 +49,15 @@ export function FormMessage({ message, variant = 'info', style, ...rest }: FormM
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: theme.radii.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.xs,
     borderWidth: 1,
   },
   text: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...theme.typography.captionStrong,
     textAlign: 'center',
   },
-});
+}));

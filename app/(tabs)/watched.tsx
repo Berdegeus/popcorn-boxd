@@ -8,14 +8,13 @@ import {
   FlatList,
   ListRenderItemInfo,
   Pressable,
-  StyleSheet,
   View,
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useWatchedMovies, type WatchedMovie } from '@/context/WatchedMoviesContext';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { makeStyles, useAppTheme } from '@/hooks/useAppTheme';
 
 const TMDB_POSTER_URL = 'https://image.tmdb.org/t/p/w185';
 
@@ -39,14 +38,17 @@ function getPosterSource(posterPath?: string | null) {
 export default function WatchedMoviesScreen() {
   const router = useRouter();
   const { watchedMovies, isLoading, removeWatchedMovie } = useWatchedMovies();
+  const theme = useAppTheme();
+  const styles = useStyles();
 
-  const cardBackgroundColor = useThemeColor({ light: '#FFFFFF', dark: '#1F2937' }, 'background');
-  const borderColor = useThemeColor({ light: '#E5E7EB', dark: '#374151' }, 'background');
-  const captionColor = useThemeColor({ light: '#4B5563', dark: '#9CA3AF' }, 'icon');
-  const removeButtonColor = useThemeColor({ light: '#FEE2E2', dark: '#7F1D1D' }, 'background');
-  const removeButtonPressedColor = useThemeColor({ light: '#FCA5A5', dark: '#991B1B' }, 'tint');
-  const removeButtonTextColor = useThemeColor({ light: '#7F1D1D', dark: '#FECACA' }, 'tint');
-  const activityIndicatorColor = useThemeColor({}, 'tint');
+  const cardBackgroundColor = theme.colors.surface;
+  const borderColor = theme.colors.border;
+  const captionColor = theme.colors.textMuted;
+  const removeButtonColor = theme.mode === 'dark' ? 'rgba(248, 113, 113, 0.2)' : 'rgba(185, 28, 28, 0.12)';
+  const removeButtonPressedColor =
+    theme.mode === 'dark' ? 'rgba(248, 113, 113, 0.35)' : 'rgba(185, 28, 28, 0.22)';
+  const removeButtonTextColor = theme.colors.danger;
+  const activityIndicatorColor = theme.colors.tint;
 
   const sortedMovies = useMemo(() => {
     return [...watchedMovies].sort((a, b) => {
@@ -206,7 +208,7 @@ export default function WatchedMoviesScreen() {
   );
 
   const keyExtractor = useCallback((item: WatchedMovie) => item.id.toString(), []);
-  const renderSeparator = useCallback(() => <View style={styles.listSeparator} />, []);
+  const renderSeparator = () => <View style={styles.listSeparator} />;
 
   if (isLoading) {
     return (
@@ -246,108 +248,107 @@ export default function WatchedMoviesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.lg,
   },
   emptyListContainer: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 48,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.xxl,
     justifyContent: 'center',
+    gap: theme.spacing.md,
   },
   itemWrapper: {
     alignItems: 'flex-start',
   },
   listHeader: {
-    marginTop: 30,
-    marginBottom: 16,
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.nano,
   },
   headerTitle: {
-    marginBottom: 4,
+    marginBottom: theme.spacing.nano,
   },
   headerSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...theme.typography.caption,
   },
   itemButton: {
     flexDirection: 'row',
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: theme.radii.lg,
+    padding: theme.spacing.md,
     alignItems: 'center',
-    gap: 12,
+    gap: theme.spacing.xs,
     minHeight: 96,
   },
   poster: {
     width: 72,
     height: 108,
-    borderRadius: 12,
+    borderRadius: theme.radii.md,
   },
   posterPlaceholder: {
     width: 72,
     height: 108,
-    borderRadius: 12,
+    borderRadius: theme.radii.md,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: theme.spacing.nano,
   },
   posterPlaceholderText: {
-    fontSize: 11,
+    ...theme.typography.caption,
     textAlign: 'center',
   },
   movieDetails: {
     flex: 1,
-    gap: 4,
+    gap: theme.spacing.nano,
   },
   movieTitle: {
-    fontSize: 16,
+    ...theme.typography.heading,
   },
   movieMeta: {
-    fontSize: 14,
+    ...theme.typography.caption,
   },
   listSeparator: {
-    height: 16,
+    height: theme.spacing.sm,
   },
   removeButton: {
-    borderRadius: 999,
+    borderRadius: theme.radii.full,
     alignSelf: 'flex-start',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.xs,
     minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: theme.spacing.nano,
   },
   removeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...theme.typography.button,
   },
   emptyState: {
-    gap: 12,
+    gap: theme.spacing.xs,
   },
   emptyStateTitle: {
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: theme.spacing.nano,
   },
   emptyStateText: {
+    ...theme.typography.body,
     textAlign: 'center',
-    fontSize: 16,
-    lineHeight: 22,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    gap: 16,
+    paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.sm,
   },
   loadingText: {
-    fontSize: 16,
+    ...theme.typography.body,
     textAlign: 'center',
   },
-});
+}));

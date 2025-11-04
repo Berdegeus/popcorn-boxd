@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  StyleSheet,
   View,
 } from 'react-native';
 
@@ -14,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TextField } from '@/components/ui/text-field';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { makeStyles, useAppTheme } from '@/hooks/useAppTheme';
 
 export type MovieResult = {
   id: number;
@@ -98,10 +97,13 @@ export default function MovieSearchScreen() {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const apiKey = process.env.EXPO_PUBLIC_TMDB_API_KEY;
+  const theme = useAppTheme();
+  const styles = useStyles();
 
-  const inputBorderColor = useThemeColor({ light: '#D1D5DB', dark: '#3F3F46' }, 'icon');
-  const cardBackgroundColor = useThemeColor({ light: '#F9FAFB', dark: '#1F2937' }, 'background');
-  const buttonBackgroundColor = useThemeColor({ light: '#0A7EA4', dark: '#1D9BF0' }, 'tint');
+  const inputBorderColor = theme.colors.inputBorder;
+  const cardBackgroundColor = theme.colors.surfaceAlt;
+  const buttonBackgroundColor = theme.colors.primary;
+  const errorColor = theme.colors.danger;
 
   const announceForAccessibility = useCallback(async (message: string) => {
     try {
@@ -367,7 +369,9 @@ export default function MovieSearchScreen() {
 
       {error ? (
         <View style={styles.statusContainer} accessibilityRole="alert">
-          <ThemedText style={styles.errorText}>{error}</ThemedText>
+          <ThemedText style={[styles.statusText, { color: errorColor, textAlign: 'center' }]}>
+            {error}
+          </ThemedText>
         </View>
       ) : null}
 
@@ -389,7 +393,10 @@ export default function MovieSearchScreen() {
   );
 }
 
-const Separator = () => <View style={styles.separator} />;
+const Separator = () => {
+  const styles = useStyles();
+  return <View style={styles.separator} />;
+};
 
 function getReleaseYear(releaseDate?: string) {
   if (!releaseDate) {
@@ -400,98 +407,95 @@ function getReleaseYear(releaseDate?: string) {
   return year && year !== '0' ? year : undefined;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
   },
   searchContainer: {
-    marginBottom: 24,
-    marginTop: 30
+    marginBottom: theme.spacing.lg,
+    marginTop: theme.spacing.xl,
   },
   statusContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.sm,
   },
   statusText: {
-    marginTop: 8,
-    fontSize: 16,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 16,
-    textAlign: 'center',
+    ...theme.typography.body,
+    marginTop: theme.spacing.xxs,
   },
   listContent: {
-    paddingBottom: 64,
+    paddingBottom: theme.spacing.xxl + theme.spacing.md,
   },
   headerContainer: {
-    marginBottom: 12,
+    marginBottom: theme.spacing.xs,
+    gap: theme.spacing.quark,
   },
   headerTitle: {
-    marginBottom: 4,
+    marginBottom: theme.spacing.nano,
   },
   headerSubtitle: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...theme.typography.body,
   },
   highlightSubtitle: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginTop: 8,
+    ...theme.typography.body,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xxs,
   },
   emptyStateText: {
-    fontSize: 16,
+    ...theme.typography.body,
     textAlign: 'center',
-    paddingVertical: 24,
+    paddingVertical: theme.spacing.lg,
+    color: theme.colors.textSecondary,
   },
   card: {
     flexDirection: 'row',
-    borderRadius: 16,
+    borderRadius: theme.radii.lg,
     overflow: 'hidden',
-    padding: 12,
+    padding: theme.spacing.md,
   },
   cardContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: theme.spacing.xs,
+    gap: theme.spacing.nano,
   },
   cardButton: {
-    marginTop: 12,
-    borderRadius: 999,
-    paddingVertical: 10,
+    marginTop: theme.spacing.xs,
+    borderRadius: theme.radii.full,
+    paddingVertical: theme.spacing.xxs,
     alignItems: 'center',
   },
   cardButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    ...theme.typography.button,
+    color: theme.colors.primaryOn,
   },
   movieTitle: {
-    fontSize: 18,
-    marginBottom: 4,
+    ...theme.typography.heading,
   },
   movieMeta: {
-    fontSize: 14,
-    marginBottom: 2,
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
   },
   poster: {
     width: 96,
     height: 144,
-    borderRadius: 12,
+    borderRadius: theme.radii.md,
   },
   posterPlaceholder: {
     width: 96,
     height: 144,
-    borderRadius: 12,
+    borderRadius: theme.radii.md,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: theme.spacing.nano,
   },
   posterPlaceholderText: {
-    fontSize: 12,
+    ...theme.typography.caption,
     textAlign: 'center',
   },
   separator: {
-    height: 16,
+    height: theme.spacing.sm,
   },
-});
+}));

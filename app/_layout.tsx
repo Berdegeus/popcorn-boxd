@@ -6,26 +6,51 @@ import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { DesignSystemProvider } from '@/context/DesignSystemContext';
 import { WatchedMoviesProvider } from '@/context/WatchedMoviesContext';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+  return (
+    <DesignSystemProvider>
+      <AuthProvider>
+        <WatchedMoviesProvider>
+          <NavigationProviders />
+        </WatchedMoviesProvider>
+      </AuthProvider>
+    </DesignSystemProvider>
+  );
+}
+
+function NavigationProviders() {
+  const appTheme = useAppTheme();
+
+  const navigationTheme = useMemo(() => {
+    const baseTheme = appTheme.mode === 'dark' ? DarkTheme : DefaultTheme;
+
+    return {
+      ...baseTheme,
+      colors: {
+        ...baseTheme.colors,
+        primary: appTheme.colors.tint,
+        background: appTheme.colors.background,
+        card: appTheme.colors.surface,
+        text: appTheme.colors.text,
+        border: appTheme.colors.border,
+        notification: appTheme.colors.primary,
+      },
+    };
+  }, [appTheme]);
 
   return (
-    <AuthProvider>
-      <WatchedMoviesProvider>
-        <ThemeProvider value={theme}>
-          <RootNavigator />
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </WatchedMoviesProvider>
-    </AuthProvider>
+    <ThemeProvider value={navigationTheme}>
+      <RootNavigator />
+      <StatusBar style={appTheme.mode === 'dark' ? 'light' : 'dark'} />
+    </ThemeProvider>
   );
 }
 

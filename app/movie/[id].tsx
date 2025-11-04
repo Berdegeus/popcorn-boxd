@@ -6,7 +6,6 @@ import {
   Alert,
   Pressable,
   ScrollView,
-  StyleSheet,
   View,
 } from 'react-native';
 
@@ -17,7 +16,7 @@ import { FormMessage } from '@/components/ui/form-message';
 import { TextField } from '@/components/ui/text-field';
 import { useAuth } from '@/context/AuthContext';
 import { useWatchedMovies } from '@/context/WatchedMoviesContext';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { makeStyles, useAppTheme } from '@/hooks/useAppTheme';
 
 const TMDB_POSTER_URL = 'https://image.tmdb.org/t/p/w342';
 
@@ -52,17 +51,18 @@ export default function MovieDetailsScreen() {
   const { getWatchedMovie, saveWatchedMovie } = useWatchedMovies();
   const { user } = useAuth();
   const router = useRouter();
+  const theme = useAppTheme();
+  const styles = useStyles();
   const [userRating, setUserRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-  const posterBorderColor = useThemeColor({ light: '#E5E7EB', dark: '#374151' }, 'background');
-  const starSelectedColor = useThemeColor({ light: '#F97316', dark: '#F59E0B' }, 'tint');
-  const starUnselectedColor = useThemeColor({ light: '#9CA3AF', dark: '#6B7280' }, 'icon');
-  const buttonBackgroundColor = useThemeColor({ light: '#0A7EA4', dark: '#1D9BF0' }, 'tint');
-  const buttonDisabledColor = useThemeColor({ light: '#9CA3AF', dark: '#4B5563' }, 'icon');
-  const captionColor = useThemeColor({ light: '#4B5563', dark: '#9CA3AF' }, 'icon');
+  const posterBorderColor = theme.colors.border;
+  const starSelectedColor = theme.colors.warning;
+  const starUnselectedColor = theme.colors.textMuted;
+  const buttonBackgroundColor = theme.colors.primary;
+  const buttonDisabledColor = theme.colors.border;
+  const captionColor = theme.colors.textMuted;
 
   const idParam = getParamValue(params.id);
   const movieId = useMemo(() => {
@@ -187,7 +187,7 @@ export default function MovieDetailsScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+        <ThemedView style={styles.container}>
       <Stack.Screen options={{ title }} />
       <ScrollView contentContainerStyle={styles.scrollContent} accessibilityLabel={`Detalhes do filme ${title}`}>
         <View style={styles.posterContainer}>
@@ -330,114 +330,108 @@ export default function MovieDetailsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
-    paddingHorizontal: 24,
+    paddingBottom: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.lg,
   },
   posterContainer: {
     alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 24,
+    marginBottom: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   poster: {
     width: 220,
     height: 330,
-    borderRadius: 16,
+    borderRadius: theme.radii.lg,
   },
   posterPlaceholder: {
     width: 220,
     height: 330,
-    borderRadius: 16,
+    borderRadius: theme.radii.lg,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.spacing.md,
   },
   posterPlaceholderText: {
+    ...theme.typography.body,
     textAlign: 'center',
-    fontSize: 16,
   },
   detailsSection: {
-    gap: 4,
-    marginBottom: 24,
+    gap: theme.spacing.nano,
   },
   title: {
-    fontSize: 26,
-    marginBottom: 4,
+    ...theme.typography.title,
   },
   metaText: {
-    fontSize: 16,
+    ...theme.typography.body,
   },
   synopsisSection: {
-    marginBottom: 32,
+    gap: theme.spacing.xs,
   },
   sectionTitle: {
-    fontSize: 18,
-    marginBottom: 8,
+    ...theme.typography.subtitle,
   },
   synopsisText: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...theme.typography.body,
   },
   ratingSection: {
-    marginBottom: 24,
+    gap: theme.spacing.xs,
   },
   ratingHelperText: {
-    fontSize: 14,
-    marginBottom: 16,
+    ...theme.typography.caption,
   },
   starsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: theme.spacing.xs,
   },
   starButton: {
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 56,
     minHeight: 88,
-    paddingVertical: 8,
-    marginHorizontal: 8,
+    paddingVertical: theme.spacing.nano,
   },
   starText: {
     fontSize: 48,
     lineHeight: 56,
   },
   reviewField: {
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.nano,
   },
   saveButton: {
-    borderRadius: 999,
-    paddingVertical: 14,
-    marginBottom: 12,
+    borderRadius: theme.radii.full,
+    paddingVertical: theme.spacing.xs,
     alignItems: 'center',
   },
   saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    ...theme.typography.button,
+    color: theme.colors.primaryOn,
   },
   saveStatus: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.sm,
   },
   savedInfoText: {
-    fontSize: 14,
+    ...theme.typography.caption,
     textAlign: 'center',
   },
   fallbackContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.xs,
   },
   fallbackText: {
-    fontSize: 16,
+    ...theme.typography.body,
     textAlign: 'center',
   },
-});
+}));

@@ -1,4 +1,3 @@
-import { useTheme } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -6,7 +5,6 @@ import {
   Alert,
   Image,
   ScrollView,
-  StyleSheet,
   View,
 } from 'react-native';
 
@@ -15,11 +13,12 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { makeStyles } from '@/hooks/useAppTheme';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const theme = useTheme();
+  const styles = useStyles();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleEditProfile = useCallback(() => {
@@ -98,7 +97,7 @@ export default function ProfileScreen() {
         </View>
 
         <View
-          style={[styles.profileCard, { backgroundColor: theme.colors.card }]}
+          style={styles.profileCard}
         >
           <Image
             source={profileImageSource}
@@ -150,7 +149,7 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -160,8 +159,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
-    gap: 24,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.lg,
     minHeight: '100%',
   },
   header: {
@@ -171,15 +170,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   profileCard: {
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: theme.radii.lg,
+    padding: theme.spacing.lg,
     alignItems: 'center',
-    gap: 16,
-    shadowColor: '#000000',
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: theme.mode === 'dark' ? 0.28 : 0.12,
     shadowRadius: 12,
-    elevation: 2,
+    elevation: 3,
   },
   avatar: {
     width: 140,
@@ -190,22 +190,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   email: {
-    fontSize: 16,
+    ...theme.typography.body,
     textAlign: 'center',
   },
   actions: {
-    gap: 16,
+    gap: theme.spacing.sm,
+    width: '100%',
   },
   fallbackContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.sm,
   },
   fallbackTitle: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.xs,
   },
   fallbackMessage: {
     textAlign: 'center',
   },
-});
+}));

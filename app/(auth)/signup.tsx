@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   TextInput,
   View,
 } from 'react-native';
@@ -18,10 +17,12 @@ import { Button } from '@/components/ui/button';
 import { FormMessage } from '@/components/ui/form-message';
 import { TextField } from '@/components/ui/text-field';
 import { useAuth } from '@/context/AuthContext';
+import { makeStyles } from '@/hooks/useAppTheme';
 
 export default function SignUpScreen() {
   const router = useRouter();
   const { signUp } = useAuth();
+  const styles = useStyles();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -76,6 +77,12 @@ export default function SignUpScreen() {
     const trimmedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
+    var is8charords = trimmedPassword.length >= 8;
+    
+    if (!is8charords) {
+      setErrorMessage('A senha deve ter no mínimo 8 caracteres.');
+      return;
+    }
 
     if (!trimmedName || !normalizedEmail || !trimmedPassword) {
       setErrorMessage('Preencha nome, e-mail e senha para concluir seu cadastro.');
@@ -234,7 +241,7 @@ export default function SignUpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   keyboardAvoiding: {
     flex: 1,
   },
@@ -243,37 +250,37 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 24,
-    gap: 24,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.lg,
   },
   title: {
     textAlign: 'center',
   },
   photoSection: {
     alignItems: 'center',
-    gap: 12,
+    gap: theme.spacing.xs,
   },
   avatar: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: theme.colors.surfaceAlt,
   },
   avatarPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarPlaceholderText: {
-    fontWeight: '600',
+    ...theme.typography.bodyStrong,
   },
   photoButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: theme.spacing.xs,
   },
   photoButton: {
     flex: 1,
   },
   fieldsGroup: {
-    gap: 16,
+    gap: theme.spacing.sm,
   },
-});
+}));

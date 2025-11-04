@@ -1,17 +1,8 @@
 import React, { forwardRef, useMemo, useRef, useState } from 'react';
-import {
-  BlurEvent,
-  FocusEvent,
-  StyleProp,
-  StyleSheet,
-  TextInput,
-  TextInputProps,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { BlurEvent, FocusEvent, StyleProp, TextInput, TextInputProps, View, ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { makeStyles, useAppTheme } from '@/hooks/useAppTheme';
 
 type TextFieldProps = TextInputProps & {
   label: string;
@@ -40,17 +31,19 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
     ref,
   ) => {
     const generatedId = useRef(`text-field-${Math.random().toString(36).slice(2, 10)}`);
+    const theme = useAppTheme();
+    const styles = useStyles();
     const inputId = nativeID ?? generatedId.current;
     const labelId = `${inputId}-label`;
 
     const [isFocused, setIsFocused] = useState(false);
 
-    const borderColor = useThemeColor({ light: '#D1D5DB', dark: '#374151' }, 'background');
-    const focusBorderColor = useThemeColor({ light: '#0A7EA4', dark: '#1D9BF0' }, 'tint');
-    const errorColor = useThemeColor({ light: '#DC2626', dark: '#FCA5A5' }, 'tint');
-    const helperColor = useThemeColor({ light: '#6B7280', dark: '#9CA3AF' }, 'icon');
-    const backgroundColor = useThemeColor({ light: '#FFFFFF', dark: '#111827' }, 'background');
-    const fallbackPlaceholderColor = useThemeColor({ light: '#9CA3AF', dark: '#6B7280' }, 'icon');
+    const borderColor = theme.colors.inputBorder;
+    const focusBorderColor = theme.colors.tint;
+    const errorColor = theme.colors.danger;
+    const helperColor = theme.colors.textMuted;
+    const backgroundColor = theme.colors.inputBackground;
+    const fallbackPlaceholderColor = theme.colors.inputPlaceholder;
 
     const resolvedPlaceholderColor = placeholderTextColor ?? fallbackPlaceholderColor;
     const resolvedBorderColor = useMemo(() => {
@@ -97,7 +90,14 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
         <TextInput
           ref={ref}
           nativeID={inputId}
-          style={[styles.input, { borderColor: resolvedBorderColor, backgroundColor }, style]}
+          style={[
+            styles.input,
+            {
+              borderColor: resolvedBorderColor,
+              backgroundColor,
+            },
+            style,
+          ]}
           accessibilityLabel={accessibilityLabel}
           accessibilityLabelledBy={accessibilityLabel ? undefined : labelId}
           accessibilityState={accessibilityState}
@@ -125,30 +125,30 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
 
 TextField.displayName = 'TextField';
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
-    gap: 8,
+    gap: theme.spacing.xxs,
   },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: theme.spacing.nano,
   },
   label: {
-    fontSize: 16,
+    ...theme.typography.bodyStrong,
   },
   requiredMark: {
-    fontSize: 16,
+    ...theme.typography.bodyStrong,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    minHeight: 48,
+    borderRadius: theme.components.textField.radius,
+    paddingHorizontal: theme.components.textField.paddingHorizontal,
+    paddingVertical: theme.components.textField.paddingVertical,
+    minHeight: theme.components.textField.minHeight,
+    ...theme.typography.body,
   },
   feedbackText: {
-    fontSize: 14,
+    ...theme.typography.caption,
   },
-});
+}));

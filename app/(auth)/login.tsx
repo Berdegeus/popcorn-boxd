@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   TextInput,
   View,
 } from 'react-native';
@@ -17,11 +16,13 @@ import { Button } from '@/components/ui/button';
 import { FormMessage } from '@/components/ui/form-message';
 import { TextField } from '@/components/ui/text-field';
 import { useAuth } from '@/context/AuthContext';
+import { makeStyles } from '@/hooks/useAppTheme';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { status: statusParam } = useLocalSearchParams<{ status?: string }>();
   const { signIn } = useAuth();
+  const styles = useStyles();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -95,7 +96,7 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <ThemedView style={styles.container}>
           <ThemedText type="title" style={styles.title} accessibilityRole="header">
-            Bem-vindo de volta
+            Bem-vindo
           </ThemedText>
 
           <View style={styles.fieldsGroup}>
@@ -156,7 +157,7 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   keyboardAvoiding: {
     flex: 1,
   },
@@ -165,17 +166,17 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 24,
+    padding: theme.spacing.lg,
     justifyContent: 'center',
-    gap: 24,
+    gap: theme.spacing.lg,
   },
   title: {
     textAlign: 'center',
   },
   fieldsGroup: {
-    gap: 16,
+    gap: theme.spacing.sm,
   },
   messageSpacing: {
     marginTop: -4,
   },
-});
+}));

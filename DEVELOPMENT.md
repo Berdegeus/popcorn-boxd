@@ -96,6 +96,7 @@ export default function UserScreen() {
 - API endpoints
 - Feature flags
 - Environment-specific values
+- Styling system docs: see [`docs/STYLING.md`](docs/STYLING.md) for theme/tokens usage
 
 #### `/assets` - Static Files
 - Images, fonts, videos

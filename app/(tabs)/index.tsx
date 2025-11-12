@@ -442,8 +442,13 @@ const useStyles = makeStyles((theme) => ({
   cardButton: {
     marginTop: theme.spacing.xs,
     borderRadius: theme.radii.full,
-    paddingVertical: theme.spacing.xxs,
+    minHeight: 44,
+    minWidth: 44,
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
   },
   cardButtonText: {
     ...theme.typography.button,

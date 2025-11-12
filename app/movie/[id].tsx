@@ -17,8 +17,7 @@ import { TextField } from '@/components/ui/text-field';
 import { useAuth } from '@/context/AuthContext';
 import { useWatchedMovies } from '@/context/WatchedMoviesContext';
 import { makeStyles, useAppTheme } from '@/hooks/useAppTheme';
-
-const TMDB_POSTER_URL = 'https://image.tmdb.org/t/p/w342';
+import { getPosterUrl } from '@/utils/tmdbClient';
 
 type MovieDetailsParams = {
   id?: string | string[];
@@ -57,6 +56,7 @@ export default function MovieDetailsScreen() {
   const [reviewText, setReviewText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isPosterFailed, setIsPosterFailed] = useState(false);
   const posterBorderColor = theme.colors.border;
   const starSelectedColor = theme.colors.warning;
   const starUnselectedColor = theme.colors.textMuted;
@@ -147,7 +147,19 @@ export default function MovieDetailsScreen() {
     } finally {
       setIsSaving(false);
     }
-  }, [movieId, overview, releaseDate, saveWatchedMovie, title, userRating, voteAverage, posterPath, savedMovie]);
+  }, [
+    movieId,
+    overview,
+    releaseDate,
+    reviewText,
+    saveWatchedMovie,
+    title,
+    user,
+    userRating,
+    voteAverage,
+    posterPath,
+    savedMovie,
+  ]);
 
   const releaseYear = useMemo(() => getReleaseYear(releaseDate), [releaseDate]);
 
@@ -167,13 +179,29 @@ export default function MovieDetailsScreen() {
     return `Sua avaliação atual é ${userRating} de 5.`;
   }, [userRating]);
 
-  const posterSource = useMemo(() => {
+  const posterUri = useMemo(() => {
     if (!posterPath) {
       return undefined;
     }
 
-    return { uri: `${TMDB_POSTER_URL}${posterPath}` };
+    return getPosterUrl(posterPath, 'w342');
   }, [posterPath]);
+
+  useEffect(() => {
+    setIsPosterFailed(false);
+  }, [posterUri]);
+
+  useEffect(() => {
+    if (!posterUri) {
+      return;
+    }
+
+    const prefetchPoster = async () => {
+      await Image.prefetch(posterUri).catch(() => undefined);
+    };
+
+    void prefetchPoster();
+  }, [posterUri]);
 
   if (!movieId || !title) {
     return (
@@ -191,18 +219,19 @@ export default function MovieDetailsScreen() {
       <Stack.Screen options={{ title }} />
       <ScrollView contentContainerStyle={styles.scrollContent} accessibilityLabel={`Detalhes do filme ${title}`}>
         <View style={styles.posterContainer}>
-          {posterSource ? (
+          {posterUri && !isPosterFailed ? (
             <Image
-              source={posterSource}
+              source={{ uri: posterUri }}
               style={styles.poster}
               accessibilityLabel={`Poster do filme ${title}`}
               accessibilityIgnoresInvertColors
+              onError={() => setIsPosterFailed(true)}
             />
           ) : (
             <View
               style={[styles.posterPlaceholder, { borderColor: posterBorderColor }]}
               accessibilityRole="image"
-              accessibilityLabel={`Poster não disponível para ${title}`}
+              accessibilityLabel={`Poster não disponível para ${title}. Exibindo ilustração genérica.`}
             >
               <ThemedText style={styles.posterPlaceholderText}>Poster indisponível</ThemedText>
             </View>
@@ -245,7 +274,11 @@ export default function MovieDetailsScreen() {
           <View style={styles.starsRow}>
             {[1, 2, 3, 4, 5].map((value) => {
               const isSelected = userRating >= value;
-              return (
+                const isStarValid = userRating !== null;
+                const isReviewValid = reviewText?.trim() !== null && reviewText?.trim() !== '';
+                const canSave = isStarValid || (isReviewValid && isStarValid);
+
+                return (
                 <Pressable
                   key={value}
                   onPress={() => handleSelectRating(value)}
@@ -256,15 +289,15 @@ export default function MovieDetailsScreen() {
                   accessibilityState={{ selected: isSelected }}
                 >
                   <ThemedText
-                    style={[
-                      styles.starText,
-                      { color: isSelected ? starSelectedColor : starUnselectedColor },
-                    ]}
+                  style={[
+                    styles.starText,
+                    { color: isSelected ? starSelectedColor : starUnselectedColor },
+                  ]}
                   >
-                    {isSelected ? '★' : '☆'}
+                  {isSelected ? '★' : '☆'}
                   </ThemedText>
                 </Pressable>
-              );
+                );
             })}
           </View>
 

@@ -179,12 +179,17 @@ type ThemeColors = {
   tabIconSelected: string;
   success: string;
   successOn: string;
+  successSurface: string;
   danger: string;
   dangerOn: string;
+  dangerSurface: string;
+  dangerSurfaceStrong: string;
   warning: string;
   warningOn: string;
+  warningSurface: string;
   info: string;
   infoOn: string;
+  infoSurface: string;
   border: string;
   borderStrong: string;
   divider: string;
@@ -199,45 +204,50 @@ type ThemeColors = {
 
 const lightColors: ThemeColors = {
   background: '#FFFFFF',
-  backgroundAlt: '#F9FAFB',
+  backgroundAlt: '#F8FAFC',
   surface: '#FFFFFF',
-  surfaceAlt: '#F3F4F6',
-  text: '#11181C',
-  textSecondary: '#4B5563',
-  textMuted: '#6B7280',
+  surfaceAlt: '#F1F5F9',
+  text: '#0F172A',
+  textSecondary: '#334155',
+  textMuted: '#64748B',
   tint: '#0A7EA4',
   primary: '#0A7EA4',
   primaryOn: '#FFFFFF',
-  icon: '#687076',
-  tabIconDefault: '#687076',
+  icon: '#475569',
+  tabIconDefault: '#64748B',
   tabIconSelected: '#0A7EA4',
   success: '#15803D',
   successOn: '#FFFFFF',
+  successSurface: '#DCFCE7',
   danger: '#B91C1C',
   dangerOn: '#FFFFFF',
+  dangerSurface: '#FEE2E2',
+  dangerSurfaceStrong: '#FBD5D5',
   warning: '#B45309',
   warningOn: '#FFFFFF',
+  warningSurface: '#FEF3C7',
   info: '#1D4ED8',
   infoOn: '#FFFFFF',
-  border: '#E5E7EB',
-  borderStrong: '#D1D5DB',
-  divider: '#E5E7EB',
+  infoSurface: '#DBEAFE',
+  border: '#CBD5F5',
+  borderStrong: '#94A3B8',
+  divider: '#E2E8F0',
   overlay: 'rgba(15, 23, 42, 0.08)',
   shadow: 'rgba(15, 23, 42, 0.08)',
   elevatedShadow: 'rgba(15, 23, 42, 0.15)',
   inputBackground: '#FFFFFF',
-  inputBorder: '#D1D5DB',
-  inputPlaceholder: '#9CA3AF',
-  skeleton: '#E5E7EB',
+  inputBorder: '#CBD5F5',
+  inputPlaceholder: '#6B7280',
+  skeleton: '#E2E8F0',
 };
 
 const darkColors: ThemeColors = {
   background: '#0B1120',
   backgroundAlt: '#0F172A',
   surface: '#111827',
-  surfaceAlt: '#1F2937',
+  surfaceAlt: '#1E293B',
   text: '#E2E8F0',
-  textSecondary: '#CBD5F5',
+  textSecondary: '#A1AEC7',
   textMuted: '#94A3B8',
   tint: '#1D9BF0',
   primary: '#38BDF8',
@@ -247,21 +257,26 @@ const darkColors: ThemeColors = {
   tabIconSelected: '#1D9BF0',
   success: '#4ADE80',
   successOn: '#0B1120',
+  successSurface: '#12291C',
   danger: '#F87171',
   dangerOn: '#0B1120',
+  dangerSurface: '#2C1517',
+  dangerSurfaceStrong: '#3A1B1D',
   warning: '#FBBF24',
   warningOn: '#0B1120',
+  warningSurface: '#2C2413',
   info: '#60A5FA',
   infoOn: '#0B1120',
-  border: '#303749',
+  infoSurface: '#14273D',
+  border: '#2A3444',
   borderStrong: '#1F2937',
   divider: '#1F2937',
   overlay: 'rgba(15, 23, 42, 0.45)',
   shadow: 'rgba(1, 8, 23, 0.45)',
   elevatedShadow: 'rgba(2, 6, 23, 0.65)',
   inputBackground: '#111827',
-  inputBorder: '#374151',
-  inputPlaceholder: '#6B7280',
+  inputBorder: '#64748B',
+  inputPlaceholder: '#94A3B8',
   skeleton: '#1F2937',
 };
 

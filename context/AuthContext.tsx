@@ -7,6 +7,7 @@ import {
   findUserByEmail,
   getCurrentUser,
   setCurrentUser,
+  updateStoredUser,
 } from '@/storage/auth';
 import { createPasswordHash, isPasswordValid } from '@/utils/password';
 
@@ -22,12 +23,19 @@ export type SignUpParams = {
   imageUri: string | null;
 };
 
+export type UpdateProfileParams = {
+  name: string;
+  email: string;
+  imageUri?: string | null;
+};
+
 export type AuthContextValue = {
   user: StoredUser | null;
   isSessionLoading: boolean;
   signIn: (params: SignInParams) => Promise<StoredUser>;
   signUp: (params: SignUpParams) => Promise<StoredUser>;
   signOut: () => Promise<void>;
+  updateProfile: (params: UpdateProfileParams) => Promise<StoredUser>;
   loadStoredSession: () => Promise<void>;
 };
 
@@ -124,9 +132,61 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  const updateProfile = useCallback(
+    async ({ name, email, imageUri }: UpdateProfileParams) => {
+      if (!user) {
+        throw new Error('É necessário estar autenticado para editar o perfil.');
+      }
+
+      const trimmedName = name.trim();
+      const normalizedEmail = email.trim().toLowerCase();
+      const resolvedImage = imageUri ?? user.imageUri;
+
+      if (!trimmedName || !normalizedEmail) {
+        throw new Error('Preencha nome e e-mail para continuar.');
+      }
+
+      if (!resolvedImage) {
+        throw new Error('Selecione uma foto de perfil.');
+      }
+
+      const emailPattern = /\S+@\S+\.\S+/;
+
+      if (!emailPattern.test(normalizedEmail)) {
+        throw new Error('Informe um e-mail válido.');
+      }
+
+      const existingUser = await findUserByEmail(normalizedEmail);
+
+      if (existingUser && existingUser.id !== user.id) {
+        throw new Error('Este e-mail já está cadastrado por outro usuário.');
+      }
+
+      const updatedUser = await updateStoredUser(user.id, {
+        name: trimmedName,
+        email: normalizedEmail,
+        imageUri: resolvedImage,
+      });
+
+      await setCurrentUser(updatedUser);
+      setUser(updatedUser);
+
+      return updatedUser;
+    },
+    [user],
+  );
+
   const value = useMemo(
-    () => ({ user, isSessionLoading, signIn, signUp, signOut, loadStoredSession }),
-    [user, isSessionLoading, signIn, signUp, signOut, loadStoredSession],
+    () => ({
+      user,
+      isSessionLoading,
+      signIn,
+      signUp,
+      signOut,
+      updateProfile,
+      loadStoredSession,
+    }),
+    [user, isSessionLoading, signIn, signUp, signOut, updateProfile, loadStoredSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -141,4 +201,3 @@ export function useAuth(): AuthContextValue {
 
   return context;
 }
-

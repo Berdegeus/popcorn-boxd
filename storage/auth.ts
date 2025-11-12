@@ -12,6 +12,10 @@ export type StoredUser = {
   createdAt: string;
 };
 
+export type UpdateStoredUserParams = Partial<
+  Pick<StoredUser, 'name' | 'email' | 'imageUri' | 'passwordHash'>
+>;
+
 function safeParse<T>(value: string | null, fallback: T): T {
   if (!value) {
     return fallback;
@@ -49,6 +53,32 @@ export async function addStoredUser(
   await storeUsers(users);
 
   return newUser;
+}
+
+export async function updateStoredUser(
+  userId: string,
+  updates: UpdateStoredUserParams,
+): Promise<StoredUser> {
+  const users = await getStoredUsers();
+  const index = users.findIndex((user) => user.id === userId);
+
+  if (index === -1) {
+    throw new Error('Usuário não encontrado.');
+  }
+
+  const currentUser = users[index];
+  const nextUser: StoredUser = {
+    ...currentUser,
+    ...updates,
+    name: updates.name !== undefined ? updates.name.trim() : currentUser.name,
+    email: updates.email !== undefined ? updates.email.trim().toLowerCase() : currentUser.email,
+    imageUri: updates.imageUri ?? currentUser.imageUri,
+  };
+
+  users[index] = nextUser;
+  await storeUsers(users);
+
+  return nextUser;
 }
 
 export async function findUserByEmail(email: string): Promise<StoredUser | undefined> {

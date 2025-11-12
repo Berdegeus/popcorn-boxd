@@ -109,6 +109,7 @@ function AppStackNavigator({ userId }: AppStackNavigatorProps) {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       <Stack.Screen name="movie/[id]" options={{ headerShown: true, title: 'Detalhes do filme' }} />
+      <Stack.Screen name="profile/edit" options={{ headerShown: true, title: 'Editar perfil' }} />
     </Stack>
   );
 }

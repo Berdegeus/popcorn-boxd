@@ -44,9 +44,8 @@ export default function WatchedMoviesScreen() {
   const cardBackgroundColor = theme.colors.surface;
   const borderColor = theme.colors.border;
   const captionColor = theme.colors.textMuted;
-  const removeButtonColor = theme.mode === 'dark' ? 'rgba(248, 113, 113, 0.2)' : 'rgba(185, 28, 28, 0.12)';
-  const removeButtonPressedColor =
-    theme.mode === 'dark' ? 'rgba(248, 113, 113, 0.35)' : 'rgba(185, 28, 28, 0.22)';
+  const removeButtonColor = theme.colors.dangerSurface;
+  const removeButtonPressedColor = theme.colors.dangerSurfaceStrong;
   const removeButtonTextColor = theme.colors.danger;
   const activityIndicatorColor = theme.colors.tint;
 
@@ -70,7 +69,7 @@ export default function WatchedMoviesScreen() {
         </ThemedText>
       </View>
     ),
-    [captionColor],
+    [captionColor, styles],
   );
 
   const handleOpenMovie = useCallback(
@@ -204,6 +203,7 @@ export default function WatchedMoviesScreen() {
       removeButtonTextColor,
       removeButtonColor,
       removeButtonPressedColor,
+      styles,
     ],
   );
 

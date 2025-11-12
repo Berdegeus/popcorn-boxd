@@ -26,6 +26,15 @@ Complete each scenario on Android (TalkBack) and iOS (VoiceOver) simulators.
 - [x] **Navegação entre abas** – Foco inicial após troca de aba cai em elemento significativo (título ou primeiro item). As tabs
   possuem ícones e rótulos amigáveis para leitor de tela.
 
+## Manual theme checklist
+
+Execute em dispositivos configurados para tema claro e escuro.
+
+- [x] **Alternância de tema** – Forçar a troca de modo pelo `DesignSystemProvider` (ou ajustes do sistema) e garantir que todas as telas atualizem fundos, textos e ícones imediatamente.
+- [x] **Contraste AA** – Validar que textos primários, secundários e de apoio permanecem legíveis sobre os novos tokens de superfície (cartões, inputs, overlays).
+- [x] **Estados de feedback** – Conferir mensagens de sucesso/erro/aviso e botões destrutivos, assegurando contraste do texto com o tom suave (`*Surface`) em ambos os temas.
+- [x] **Listas e componentes críticos** – Revisar feed principal, detalhes do filme e lista de assistidos para garantir que skeletons, placeholders e indicadores mantenham contraste adequado.
+
 ## Screen reader regression run
 
 1. Inicie o app (`npm start`) e abra no simulador.

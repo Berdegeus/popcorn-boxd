@@ -22,13 +22,8 @@ export default function ProfileScreen() {
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleEditProfile = useCallback(() => {
-    Alert.alert(
-      'Em breve',
-      'A edição de perfil estará disponível em uma atualização futura.',
-      undefined,
-      { cancelable: true },
-    );
-  }, []);
+    router.push('/profile/edit');
+  }, [router]);
 
   const handleLogout = useCallback(async () => {
     if (isSigningOut) {
@@ -64,7 +59,7 @@ export default function ProfileScreen() {
 
       return () => clearTimeout(t);
     }
-  }, [user]);
+  }, [router, user]);
 
   if (!user) {
     // while the redirect happens show a brief fallback so the screen isn't blank
@@ -130,7 +125,7 @@ export default function ProfileScreen() {
             label="Editar perfil"
             onPress={handleEditProfile}
             accessibilityLabel="Editar perfil"
-            accessibilityHint="Exibe uma mensagem informando sobre a disponibilidade futura da edição de perfil"
+            accessibilityHint="Abre a tela para alterar seus dados pessoais"
           />
 
           <Button

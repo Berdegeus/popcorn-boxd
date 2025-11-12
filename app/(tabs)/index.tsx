@@ -14,79 +14,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TextField } from '@/components/ui/text-field';
 import { makeStyles, useAppTheme } from '@/hooks/useAppTheme';
-
-export type MovieResult = {
-  id: number;
-  title: string;
-  release_date?: string;
-  vote_average?: number;
-  poster_path?: string | null;
-  overview?: string;
-};
-
-type SearchResponse = {
-  results?: MovieResult[];
-};
-
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w185';
+import { MovieResult, getMovieDetails, getPosterUrl, searchMovies } from '@/utils/tmdbClient';
 const DEBOUNCE_IN_MS = 500;
 
-const TRENDING_MOVIES: MovieResult[] = [
-  {
-    id: 718821,
-    title: 'Rivais',
-    release_date: '2024-04-18',
-    vote_average: 7.3,
-    poster_path: '/nMQ0C7mUyfm2z9TiSKmCM4vSFnu.jpg',
-    overview:
-      'Um triângulo amoroso entre um casal e um antigo amigo muda o rumo de suas vidas dentro e fora das quadras de tênis.',
-  },
-  {
-    id: 653346,
-    title: 'O Homem do Norte',
-    release_date: '2022-04-07',
-    vote_average: 7.1,
-    poster_path: '/zhLKlUaF1SEpO58ppHIAyENkwgw.jpg',
-    overview:
-      'Um príncipe nórdico busca vingança pela morte do pai em uma jornada repleta de visões, batalhas e confrontos sangrentos.',
-  },
-  {
-    id: 914460,
-    title: 'Rebel Moon - Parte 2: A Marcadora de Cicatrizes',
-    release_date: '2024-04-19',
-    vote_average: 6,
-    poster_path: '/oj5E7WDN3B9qbeQLfkc1C01N4Po.jpg',
-    overview:
-      'Os heróis de Veldt se preparam para enfrentar o Império quando forças sombrias ameaçam destruir a nova esperança do universo.',
-  },
-  {
-    id: 1072790,
-    title: 'Imaculada',
-    release_date: '2024-03-20',
-    vote_average: 6.5,
-    poster_path: '/4FkFGDLkzs0tVK0g0eGfzbw05af.jpg',
-    overview:
-      'Uma jovem freira se muda para um remoto convento italiano e descobre que milagres podem esconder um terror inimaginável.',
-  },
-  {
-    id: 787699,
-    title: 'Wonka',
-    release_date: '2023-12-06',
-    vote_average: 7.2,
-    poster_path: '/edY0LnkYZf1tu1pGIQR2g00grIE.jpg',
-    overview:
-      'A origem do excêntrico chocolatier Willy Wonka, um sonhador que planeja abrir a fábrica mais extraordinária do mundo.',
-  },
-  {
-    id: 804717,
-    title: 'A Queda de Lenora',
-    release_date: '2024-04-11',
-    vote_average: 6.4,
-    poster_path: '/7Ixhb6rhdT7nprbHXM9KW0n8Y5m.jpg',
-    overview:
-      'Uma detetive obstinada investiga uma série de crimes em uma cidade costeira onde nada é o que parece.',
-  },
-];
+const TRENDING_MOVIE_IDS: number[] = [76341, 40096, 496243, 129, 120467];
 
 export default function MovieSearchScreen() {
   const router = useRouter();
@@ -96,6 +27,7 @@ export default function MovieSearchScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const [failedPosterIds, setFailedPosterIds] = useState<Record<number, boolean>>({});
   const apiKey = process.env.EXPO_PUBLIC_TMDB_API_KEY;
   const theme = useAppTheme();
   const styles = useStyles();
@@ -111,6 +43,10 @@ export default function MovieSearchScreen() {
     } catch (announceError) {
       console.debug('Falha ao anunciar para acessibilidade', announceError);
     }
+  }, []);
+
+  const handlePosterError = useCallback((movieId: number) => {
+    setFailedPosterIds((prev) => ({ ...prev, [movieId]: true }));
   }, []);
 
   const handleMovieDetails = useCallback(
@@ -165,29 +101,16 @@ export default function MovieSearchScreen() {
       void announceForAccessibility('Buscando filmes...');
 
       try {
-        const url = `https://api.themoviedb.org/3/search/movie?include_adult=false&language=pt-BR&page=1&query=${encodeURIComponent(
-          trimmedQuery,
-        )}&api_key=${apiKey}`;
-        const response = await fetch(url, {
-          method: 'GET',
+        const nextResults = await searchMovies(trimmedQuery, {
           signal: controller.signal,
-          headers: {
-            Accept: 'application/json',
-          },
         });
-
-        if (!response.ok) {
-          throw new Error('Não foi possível obter resultados no momento.');
-        }
-
-        const data = (await response.json()) as SearchResponse;
-        const nextResults = data.results ?? [];
 
         if (controller.signal.aborted) {
           return;
         }
 
         setResults(nextResults);
+        setFailedPosterIds({});
 
         if (nextResults.length === 0) {
           void announceForAccessibility('Nenhum filme encontrado.');
@@ -216,10 +139,39 @@ export default function MovieSearchScreen() {
   );
 
   useEffect(() => {
-    setSuggestions(TRENDING_MOVIES);
-    if (TRENDING_MOVIES.length > 0) {
-      void announceForAccessibility('Filmes em destaque carregados. Explore as sugestões disponíveis.');
-    }
+    let active = true;
+
+    const loadTrending = async () => {
+      try {
+        const details = await Promise.all(
+          TRENDING_MOVIE_IDS.map(async (id) => {
+            try {
+              const movie = await getMovieDetails(id);
+              return movie as MovieResult;
+            } catch (e) {
+              console.warn('Failed to load trending movie', id, e);
+              return undefined;
+            }
+          }),
+        );
+
+        if (!active) return;
+
+        const filtered = details.filter((m): m is MovieResult => Boolean(m));
+        setSuggestions(filtered);
+        if (filtered.length > 0) {
+          void announceForAccessibility('Filmes em destaque carregados. Explore as sugestões disponíveis.');
+        }
+      } catch (e) {
+        console.error('Failed to load trending movies', e);
+      }
+    };
+
+    void loadTrending();
+
+    return () => {
+      active = false;
+    };
   }, [announceForAccessibility]);
 
   useEffect(() => {
@@ -242,9 +194,8 @@ export default function MovieSearchScreen() {
     ({ item }: { item: MovieResult }) => {
       const releaseYear = getReleaseYear(item.release_date);
       const rating = typeof item.vote_average === 'number' ? item.vote_average.toFixed(1) : '—';
-      const posterSource = item.poster_path
-        ? { uri: `${TMDB_IMAGE_BASE_URL}${item.poster_path}` }
-        : null;
+      const posterUri = item.poster_path ? getPosterUrl(item.poster_path) : undefined;
+      const shouldShowPlaceholder = !posterUri || failedPosterIds[item.id];
 
       return (
         <ThemedView
@@ -252,18 +203,19 @@ export default function MovieSearchScreen() {
           accessible
           accessibilityLabel={`${item.title}. Ano: ${releaseYear ?? 'indisponível'}. Avaliação média: ${rating}`}
         >
-          {posterSource ? (
+          {!shouldShowPlaceholder ? (
             <Image
-              source={posterSource}
+              source={{ uri: posterUri }}
               style={styles.poster}
               accessibilityIgnoresInvertColors
               accessibilityLabel={`Poster do filme ${item.title}`}
+              onError={() => handlePosterError(item.id)}
             />
           ) : (
             <View
               style={[styles.posterPlaceholder, { borderColor: inputBorderColor }]}
               accessibilityRole="image"
-              accessibilityLabel={`Poster não disponível para ${item.title}`}
+              accessibilityLabel={`Poster não disponível para ${item.title}. Exibindo ilustração genérica.`}
             >
               <ThemedText style={styles.posterPlaceholderText}>Sem poster</ThemedText>
             </View>
@@ -288,7 +240,15 @@ export default function MovieSearchScreen() {
         </ThemedView>
       );
     },
-    [buttonBackgroundColor, cardBackgroundColor, handleMovieDetails, inputBorderColor],
+    [
+      buttonBackgroundColor,
+      cardBackgroundColor,
+      failedPosterIds,
+      handleMovieDetails,
+      handlePosterError,
+      inputBorderColor,
+      styles,
+    ],
   );
 
   const keyExtractor = useCallback((item: MovieResult) => item.id.toString(), []);
@@ -312,7 +272,7 @@ export default function MovieSearchScreen() {
         ) : null}
       </View>
     ),
-    [isShowingSuggestions],
+    [isShowingSuggestions, styles],
   );
 
   const emptyState = useMemo(() => {
@@ -337,9 +297,28 @@ export default function MovieSearchScreen() {
         Não encontramos filmes com esse nome. Tente outra busca.
       </ThemedText>
     );
-  }, [error, isLoading, isShowingSuggestions, suggestions.length]);
+  }, [error, isLoading, isShowingSuggestions, styles.emptyStateText, suggestions.length]);
 
-  const listData = isShowingSuggestions ? suggestions : results;
+  const listData = useMemo(
+    () => (isShowingSuggestions ? suggestions : results),
+    [isShowingSuggestions, results, suggestions],
+  );
+
+  useEffect(() => {
+    const posterUrls = listData
+      .map((movie) => (movie.poster_path ? getPosterUrl(movie.poster_path) : undefined))
+      .filter((url): url is string => Boolean(url));
+
+    if (posterUrls.length === 0) {
+      return;
+    }
+
+    const prefetch = async () => {
+      await Promise.allSettled(posterUrls.map((url) => Image.prefetch(url)));
+    };
+
+    void prefetch();
+  }, [listData]);
 
   return (
     <ThemedView style={styles.container}>

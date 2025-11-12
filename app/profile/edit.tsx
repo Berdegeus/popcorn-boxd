@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -19,20 +19,26 @@ import { TextField } from '@/components/ui/text-field';
 import { useAuth } from '@/context/AuthContext';
 import { makeStyles } from '@/hooks/useAppTheme';
 
-export default function SignUpScreen() {
+export default function EditProfileScreen() {
   const router = useRouter();
-  const { signUp } = useAuth();
   const styles = useStyles();
+  const { user, updateProfile } = useAuth();
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [name, setName] = useState(user?.name ?? '');
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [imageUri, setImageUri] = useState<string | null>(user?.imageUri ?? null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const emailInputRef = useRef<TextInput | null>(null);
-  const passwordInputRef = useRef<TextInput | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name);
+      setEmail(user.email);
+      setImageUri(user.imageUri);
+    }
+  }, [user]);
 
   const handlePickFromLibrary = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -73,19 +79,9 @@ export default function SignUpScreen() {
     }
   };
 
-  const handleSignUp = async () => {
-    const trimmedName = name.trim();
-    const normalizedEmail = email.trim().toLowerCase();
-    const trimmedPassword = password.trim();
-    const is8charords = trimmedPassword.length >= 8;
-    
-    if (!is8charords) {
-      setErrorMessage('A senha deve ter no mínimo 8 caracteres.');
-      return;
-    }
-
-    if (!trimmedName || !normalizedEmail || !trimmedPassword) {
-      setErrorMessage('Preencha nome, e-mail e senha para concluir seu cadastro.');
+  const handleSaveProfile = async () => {
+    if (!user) {
+      setErrorMessage('Você não está autenticado. Faça login novamente.');
       return;
     }
 
@@ -93,46 +89,50 @@ export default function SignUpScreen() {
     setErrorMessage('');
 
     try {
-      await signUp({
-        email: normalizedEmail,
-        name: trimmedName,
-        password: trimmedPassword,
+      await updateProfile({
+        name,
+        email,
         imageUri,
       });
 
-      Alert.alert('Cadastro concluído', 'Sua conta foi criada com sucesso!');
-      router.replace('/(tabs)');
+      Alert.alert('Perfil atualizado', 'Suas informações foram salvas com sucesso.');
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)/profile');
+      }
     } catch (error) {
-      console.error('Failed to create account', error);
+      console.error('Failed to update profile', error);
+
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        Alert.alert('Erro', 'Não foi possível concluir o cadastro. Tente novamente.');
+        Alert.alert('Erro', 'Não foi possível atualizar seu perfil. Tente novamente.');
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleNavigateToLogin = () => {
-    router.replace('/(auth)/login');
-  };
-
   const isSubmitDisabled = useMemo(() => {
     return (
-      name.trim().length === 0 || email.trim().length === 0 || password.trim().length === 0 || isSubmitting
+      name.trim().length === 0 ||
+      email.trim().length === 0 ||
+      !imageUri ||
+      isSubmitting
     );
-  }, [email, isSubmitting, name, password]);
+  }, [email, imageUri, isSubmitting, name]);
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.keyboardAvoiding}
+      accessibilityLabel="Tela de edição de perfil"
     >
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <ThemedView style={styles.container}>
           <ThemedText type="title" style={styles.title} accessibilityRole="header">
-            Crie sua conta
+            Editar perfil
           </ThemedText>
 
           <View style={styles.photoSection}>
@@ -140,14 +140,13 @@ export default function SignUpScreen() {
               <Image
                 source={{ uri: imageUri }}
                 style={styles.avatar}
-                accessibilityLabel="Pré-visualização da foto escolhida"
-                accessible
+                accessibilityLabel="Foto de perfil selecionada"
               />
             ) : (
               <View
                 style={[styles.avatar, styles.avatarPlaceholder]}
-                accessibilityLabel="Sem foto selecionada"
                 accessible
+                accessibilityLabel="Nenhuma foto selecionada"
               >
                 <ThemedText style={styles.avatarPlaceholderText}>Foto</ThemedText>
               </View>
@@ -197,43 +196,26 @@ export default function SignUpScreen() {
               autoComplete="email"
               placeholder="seu@email.com"
               textContentType="emailAddress"
-              returnKeyType="next"
-              onSubmitEditing={() => {
-                passwordInputRef.current?.focus?.();
-              }}
-              blurOnSubmit={false}
-            />
-
-            <TextField
-              ref={passwordInputRef}
-              label="Senha"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="Crie uma senha"
-              textContentType="newPassword"
               returnKeyType="done"
-              onSubmitEditing={handleSignUp}
+              onSubmitEditing={handleSaveProfile}
             />
           </View>
 
-          {errorMessage ? (
-            <FormMessage message={errorMessage} variant="error" />
-          ) : null}
+          {errorMessage ? <FormMessage message={errorMessage} variant="error" /> : null}
 
           <Button
-            label="Cadastrar"
-            onPress={handleSignUp}
+            label="Salvar alterações"
+            onPress={handleSaveProfile}
             loading={isSubmitting}
             disabled={isSubmitDisabled}
-            accessibilityLabel="Concluir cadastro"
+            accessibilityLabel="Salvar as alterações do perfil"
           />
 
           <Button
-            label="Já tenho conta"
-            onPress={handleNavigateToLogin}
+            label="Cancelar"
+            onPress={() => router.back()}
             variant="secondary"
-            accessibilityLabel="Voltar para a tela de login"
+            accessibilityLabel="Cancelar edição e voltar à tela anterior"
           />
         </ThemedView>
       </ScrollView>
@@ -261,9 +243,9 @@ const useStyles = makeStyles((theme) => ({
     gap: theme.spacing.xs,
   },
   avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     backgroundColor: theme.colors.surfaceAlt,
   },
   avatarPlaceholder: {

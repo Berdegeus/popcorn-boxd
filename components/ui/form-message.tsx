@@ -15,22 +15,25 @@ export function FormMessage({ message, variant = 'info', style, ...rest }: FormM
   const theme = useAppTheme();
   const styles = useStyles();
 
-  const { textColor, backgroundColor } = useMemo(() => {
+  const { textColor, backgroundColor, borderColor } = useMemo(() => {
     switch (variant) {
       case 'success':
         return {
           textColor: theme.colors.success,
-          backgroundColor: theme.mode === 'dark' ? 'rgba(74, 222, 128, 0.18)' : 'rgba(21, 128, 61, 0.12)',
+          backgroundColor: theme.colors.successSurface,
+          borderColor: theme.colors.success,
         };
       case 'error':
         return {
           textColor: theme.colors.danger,
-          backgroundColor: theme.mode === 'dark' ? 'rgba(248, 113, 113, 0.2)' : 'rgba(185, 28, 28, 0.12)',
+          backgroundColor: theme.colors.dangerSurface,
+          borderColor: theme.colors.danger,
         };
       default:
         return {
           textColor: theme.colors.info,
-          backgroundColor: theme.mode === 'dark' ? 'rgba(96, 165, 250, 0.18)' : 'rgba(29, 78, 216, 0.12)',
+          backgroundColor: theme.colors.infoSurface,
+          borderColor: theme.colors.info,
         };
     }
   }, [theme, variant]);
@@ -39,7 +42,7 @@ export function FormMessage({ message, variant = 'info', style, ...rest }: FormM
 
   return (
     <View
-      style={[styles.container, { backgroundColor, borderColor: textColor }, style]}
+      style={[styles.container, { backgroundColor, borderColor }, style]}
       accessibilityRole={accessibilityRole}
       accessibilityLiveRegion={variant === 'info' ? undefined : 'polite'}
       {...rest}

@@ -27,6 +27,8 @@ export type UpdateProfileParams = {
   name: string;
   email: string;
   imageUri?: string | null;
+  password?: string;
+  confirmPassword?: string;
 };
 
 export type AuthContextValue = {
@@ -133,14 +135,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const updateProfile = useCallback(
-    async ({ name, email, imageUri }: UpdateProfileParams) => {
+    async ({ name, email, imageUri, password, confirmPassword }: UpdateProfileParams) => {
       if (!user) {
         throw new Error('É necessário estar autenticado para editar o perfil.');
       }
 
       const trimmedName = name.trim();
       const normalizedEmail = email.trim().toLowerCase();
-      const resolvedImage = imageUri ?? user.imageUri;
+      const resolvedImage = imageUri === undefined ? user.imageUri : imageUri;
+      const trimmedPassword = password?.trim() ?? '';
+      const trimmedConfirmPassword = confirmPassword?.trim() ?? '';
 
       if (!trimmedName || !normalizedEmail) {
         throw new Error('Preencha nome e e-mail para continuar.');
@@ -156,22 +160,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error('Informe um e-mail válido.');
       }
 
+      if (trimmedPassword || trimmedConfirmPassword) {
+        if (!trimmedPassword || !trimmedConfirmPassword) {
+          throw new Error('Informe e confirme a nova senha para continuar.');
+        }
+
+        if (trimmedPassword !== trimmedConfirmPassword) {
+          throw new Error('As senhas informadas não coincidem.');
+        }
+      }
+
       const existingUser = await findUserByEmail(normalizedEmail);
 
       if (existingUser && existingUser.id !== user.id) {
         throw new Error('Este e-mail já está cadastrado por outro usuário.');
       }
 
-      const updatedUser = await updateStoredUser(user.id, {
+      const nextUser = await updateStoredUser({
+        ...user,
         name: trimmedName,
         email: normalizedEmail,
         imageUri: resolvedImage,
+        passwordHash: trimmedPassword ? createPasswordHash(trimmedPassword) : user.passwordHash,
       });
 
-      await setCurrentUser(updatedUser);
-      setUser(updatedUser);
+      await setCurrentUser(nextUser);
+      setUser(nextUser);
 
-      return updatedUser;
+      return nextUser;
     },
     [user],
   );

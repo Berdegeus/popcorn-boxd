@@ -22,7 +22,7 @@ export default function ProfileScreen() {
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleEditProfile = useCallback(() => {
-    router.push('/profile/edit');
+    router.push('/(tabs)/profile/edit');
   }, [router]);
 
   const handleLogout = useCallback(async () => {

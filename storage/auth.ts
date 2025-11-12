@@ -12,10 +12,6 @@ export type StoredUser = {
   createdAt: string;
 };
 
-export type UpdateStoredUserParams = Partial<
-  Pick<StoredUser, 'name' | 'email' | 'imageUri' | 'passwordHash'>
->;
-
 function safeParse<T>(value: string | null, fallback: T): T {
   if (!value) {
     return fallback;
@@ -38,16 +34,33 @@ export async function storeUsers(users: StoredUser[]): Promise<void> {
   await AsyncStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
 }
 
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function normalizeName(name: string): string {
+  return name.trim();
+}
+
+function normalizeStoredUser(user: StoredUser): StoredUser {
+  return {
+    ...user,
+    name: normalizeName(user.name),
+    email: normalizeEmail(user.email),
+  };
+}
+
 export async function addStoredUser(
   user: Omit<StoredUser, 'id' | 'createdAt'>,
 ): Promise<StoredUser> {
   const users = await getStoredUsers();
-  const newUser: StoredUser = {
+  const id = `${Date.now()}`;
+  const createdAt = new Date().toISOString();
+  const newUser: StoredUser = normalizeStoredUser({
     ...user,
-    email: user.email.trim().toLowerCase(),
-    id: `${Date.now()}`,
-    createdAt: new Date().toISOString(),
-  };
+    id,
+    createdAt,
+  });
 
   users.push(newUser);
   await storeUsers(users);
@@ -55,34 +68,29 @@ export async function addStoredUser(
   return newUser;
 }
 
-export async function updateStoredUser(
-  userId: string,
-  updates: UpdateStoredUserParams,
-): Promise<StoredUser> {
+export async function updateStoredUser(updated: StoredUser): Promise<StoredUser> {
   const users = await getStoredUsers();
-  const index = users.findIndex((user) => user.id === userId);
+  const index = users.findIndex((user) => user.id === updated.id);
 
   if (index === -1) {
     throw new Error('Usuário não encontrado.');
   }
 
   const currentUser = users[index];
-  const nextUser: StoredUser = {
+  const normalizedUser = normalizeStoredUser({
     ...currentUser,
-    ...updates,
-    name: updates.name !== undefined ? updates.name.trim() : currentUser.name,
-    email: updates.email !== undefined ? updates.email.trim().toLowerCase() : currentUser.email,
-    imageUri: updates.imageUri ?? currentUser.imageUri,
-  };
+    ...updated,
+    createdAt: currentUser.createdAt,
+  });
 
-  users[index] = nextUser;
+  users[index] = normalizedUser;
   await storeUsers(users);
 
-  return nextUser;
+  return normalizedUser;
 }
 
 export async function findUserByEmail(email: string): Promise<StoredUser | undefined> {
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = normalizeEmail(email);
   const users = await getStoredUsers();
 
   return users.find((user) => user.email === normalizedEmail);

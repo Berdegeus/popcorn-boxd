@@ -1,9 +1,11 @@
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   View,
@@ -57,12 +59,18 @@ export default function MovieDetailsScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isPosterFailed, setIsPosterFailed] = useState(false);
+  const scrollViewRef = useRef<ScrollView | null>(null);
   const posterBorderColor = theme.colors.border;
   const starSelectedColor = theme.colors.warning;
   const starUnselectedColor = theme.colors.textMuted;
   const buttonBackgroundColor = theme.colors.primary;
   const buttonDisabledColor = theme.colors.border;
   const captionColor = theme.colors.textMuted;
+  const handleReviewFocus = useCallback(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 150);
+  }, []);
 
   const idParam = getParamValue(params.id);
   const movieId = useMemo(() => {
@@ -215,156 +223,171 @@ export default function MovieDetailsScreen() {
   }
 
   return (
-        <ThemedView style={styles.container}>
+    <ThemedView style={styles.container}>
       <Stack.Screen options={{ title }} />
-      <ScrollView contentContainerStyle={styles.scrollContent} accessibilityLabel={`Detalhes do filme ${title}`}>
-        <View style={styles.posterContainer}>
-          {posterUri && !isPosterFailed ? (
-            <Image
-              source={{ uri: posterUri }}
-              style={styles.poster}
-              accessibilityLabel={`Poster do filme ${title}`}
-              accessibilityIgnoresInvertColors
-              onError={() => setIsPosterFailed(true)}
-            />
-          ) : (
-            <View
-              style={[styles.posterPlaceholder, { borderColor: posterBorderColor }]}
-              accessibilityRole="image"
-              accessibilityLabel={`Poster não disponível para ${title}. Exibindo ilustração genérica.`}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoiding}
+        behavior={Platform.select({ ios: 'padding', android: 'height' })}
+        keyboardVerticalOffset={Platform.select({ ios: 80, android: 0, default: 0 })}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
+          accessibilityLabel={`Detalhes do filme ${title}`}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.posterContainer}>
+            {posterUri && !isPosterFailed ? (
+              <Image
+                source={{ uri: posterUri }}
+                style={styles.poster}
+                accessibilityLabel={`Poster do filme ${title}`}
+                accessibilityIgnoresInvertColors
+                onError={() => setIsPosterFailed(true)}
+              />
+            ) : (
+              <View
+                style={[styles.posterPlaceholder, { borderColor: posterBorderColor }]}
+                accessibilityRole="image"
+                accessibilityLabel={`Poster não disponível para ${title}. Exibindo ilustração genérica.`}
+              >
+                <ThemedText style={styles.posterPlaceholderText}>Poster indisponível</ThemedText>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.detailsSection}>
+            <ThemedText type="title" style={styles.title} accessibilityRole="header">
+              {title}
+            </ThemedText>
+            <ThemedText style={styles.metaText} accessibilityRole="text">
+              {releaseYear ? `Ano de lançamento: ${releaseYear}` : 'Ano de lançamento indisponível'}
+            </ThemedText>
+            <ThemedText style={styles.metaText} accessibilityRole="text">
+              {ratingLabel}
+            </ThemedText>
+          </View>
+
+          <View style={styles.synopsisSection}>
+            <ThemedText type="defaultSemiBold" style={styles.sectionTitle} accessibilityRole="header">
+              Sinopse
+            </ThemedText>
+            <ThemedText style={styles.synopsisText} accessibilityRole="text">
+              {overview ? overview : 'Sinopse não disponível para este título.'}
+            </ThemedText>
+          </View>
+
+          <View style={styles.ratingSection}>
+            <ThemedText
+              type="defaultSemiBold"
+              style={styles.sectionTitle}
+              accessibilityRole="header"
+              accessibilityLabel="Avalie este filme"
             >
-              <ThemedText style={styles.posterPlaceholderText}>Poster indisponível</ThemedText>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.detailsSection}>
-          <ThemedText type="title" style={styles.title} accessibilityRole="header">
-            {title}
-          </ThemedText>
-          <ThemedText style={styles.metaText} accessibilityRole="text">
-            {releaseYear ? `Ano de lançamento: ${releaseYear}` : 'Ano de lançamento indisponível'}
-          </ThemedText>
-          <ThemedText style={styles.metaText} accessibilityRole="text">
-            {ratingLabel}
-          </ThemedText>
-        </View>
-
-        <View style={styles.synopsisSection}>
-          <ThemedText type="defaultSemiBold" style={styles.sectionTitle} accessibilityRole="header">
-            Sinopse
-          </ThemedText>
-          <ThemedText style={styles.synopsisText} accessibilityRole="text">
-            {overview ? overview : 'Sinopse não disponível para este título.'}
-          </ThemedText>
-        </View>
-
-        <View style={styles.ratingSection}>
-          <ThemedText
-            type="defaultSemiBold"
-            style={styles.sectionTitle}
-            accessibilityRole="header"
-            accessibilityLabel="Avalie este filme"
-          >
-            Sua avaliação
-          </ThemedText>
-          <ThemedText style={[styles.ratingHelperText, { color: captionColor }]} accessibilityRole="text">
-            {userRatingDescription}
-          </ThemedText>
-          <View style={styles.starsRow}>
-            {[1, 2, 3, 4, 5].map((value) => {
-              const isSelected = userRating >= value;
+              Sua avaliação
+            </ThemedText>
+            <ThemedText style={[styles.ratingHelperText, { color: captionColor }]} accessibilityRole="text">
+              {userRatingDescription}
+            </ThemedText>
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((value) => {
+                const isSelected = userRating >= value;
                 const isStarValid = userRating !== null;
                 const isReviewValid = reviewText?.trim() !== null && reviewText?.trim() !== '';
                 const canSave = isStarValid || (isReviewValid && isStarValid);
 
                 return (
-                <Pressable
-                  key={value}
-                  onPress={() => handleSelectRating(value)}
-                  style={styles.starButton}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${value} ${value === 1 ? 'estrela' : 'estrelas'}`}
-                  accessibilityHint="Toque para definir sua avaliação para este filme"
-                  accessibilityState={{ selected: isSelected }}
-                >
-                  <ThemedText
-                  style={[
-                    styles.starText,
-                    { color: isSelected ? starSelectedColor : starUnselectedColor },
-                  ]}
+                  <Pressable
+                    key={value}
+                    onPress={() => handleSelectRating(value)}
+                    style={styles.starButton}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${value} ${value === 1 ? 'estrela' : 'estrelas'}`}
+                    accessibilityHint="Toque para definir sua avaliação para este filme"
+                    accessibilityState={{ selected: isSelected }}
                   >
-                  {isSelected ? '★' : '☆'}
-                  </ThemedText>
-                </Pressable>
+                    <ThemedText
+                      style={[
+                        styles.starText,
+                        { color: isSelected ? starSelectedColor : starUnselectedColor },
+                      ]}
+                    >
+                      {isSelected ? '★' : '☆'}
+                    </ThemedText>
+                  </Pressable>
                 );
-            })}
+              })}
+            </View>
+
+            {/* Text review input */}
+            <TextField
+              label="Escreva sua avaliação (opcional)"
+              value={reviewText}
+              onChangeText={setReviewText}
+              placeholder="Compartilhe sua opinião sobre o filme"
+              multiline
+              numberOfLines={4}
+              containerStyle={styles.reviewField}
+              accessibilityHint="Campo opcional para escrever uma avaliação em texto"
+              onFocus={handleReviewFocus}
+            />
           </View>
 
-          {/* Text review input */}
-          <TextField
-            label="Escreva sua avaliação (opcional)"
-            value={reviewText}
-            onChangeText={setReviewText}
-            placeholder="Compartilhe sua opinião sobre o filme"
-            multiline
-            numberOfLines={4}
-            containerStyle={styles.reviewField}
-            accessibilityHint="Campo opcional para escrever uma avaliação em texto"
-          />
-        </View>
+          {/* Show login button when not authenticated */}
+          {!user ? (
+            <Button
+              label="Entrar para salvar"
+              onPress={() => router.push('/(auth)/login')}
+              variant="secondary"
+              accessibilityLabel="Entrar para salvar avaliações"
+              accessibilityHint="Abre a tela de login para que você possa salvar avaliações"
+            />
+          ) : null}
 
-        {/* Show login button when not authenticated */}
-        {!user ? (
-          <Button
-            label="Entrar para salvar"
-            onPress={() => router.push('/(auth)/login')}
-            variant="secondary"
-            accessibilityLabel="Entrar para salvar avaliações"
-            accessibilityHint="Abre a tela de login para que você possa salvar avaliações"
-          />
-        ) : null}
+          <Pressable
+            onPress={handleSave}
+            disabled={isSaving}
+            style={({ pressed }) => [
+              styles.saveButton,
+              {
+                backgroundColor: isSaving ? buttonDisabledColor : buttonBackgroundColor,
+                opacity: pressed || isSaving ? 0.8 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Salvar filme na lista de assistidos"
+            accessibilityHint="Guarda a sua avaliação para que você consulte mais tarde"
+            accessibilityState={{ busy: isSaving }}
+          >
+            <ThemedText style={styles.saveButtonText}>
+              {savedMovie ? 'Atualizar avaliação' : 'Salvar em assistidos'}
+            </ThemedText>
+          </Pressable>
 
-        <Pressable
-          onPress={handleSave}
-          disabled={isSaving}
-          style={({ pressed }) => [
-            styles.saveButton,
-            {
-              backgroundColor: isSaving ? buttonDisabledColor : buttonBackgroundColor,
-              opacity: pressed || isSaving ? 0.8 : 1,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Salvar filme na lista de assistidos"
-          accessibilityHint="Guarda a sua avaliação para que você consulte mais tarde"
-          accessibilityState={{ busy: isSaving }}
-        >
-          <ThemedText style={styles.saveButtonText}>
-            {savedMovie ? 'Atualizar avaliação' : 'Salvar em assistidos'}
-          </ThemedText>
-        </Pressable>
+          {saveStatus ? (
+            <FormMessage
+              message={saveStatus.message}
+              variant={saveStatus.type}
+              style={styles.saveStatus}
+            />
+          ) : null}
 
-        {saveStatus ? (
-          <FormMessage
-            message={saveStatus.message}
-            variant={saveStatus.type}
-            style={styles.saveStatus}
-          />
-        ) : null}
-
-        {savedMovie ? (
-          <ThemedText style={[styles.savedInfoText, { color: captionColor }]} accessibilityRole="text">
-            Última atualização em {new Date(savedMovie.savedAt).toLocaleDateString()} com nota {savedMovie.userRating}.
-          </ThemedText>
-        ) : null}
-      </ScrollView>
+          {savedMovie ? (
+            <ThemedText style={[styles.savedInfoText, { color: captionColor }]} accessibilityRole="text">
+              Última atualização em {new Date(savedMovie.savedAt).toLocaleDateString()} com nota {savedMovie.userRating}.
+            </ThemedText>
+          ) : null}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
 
 const useStyles = makeStyles((theme) => ({
   container: {
+    flex: 1,
+  },
+  keyboardAvoiding: {
     flex: 1,
   },
   scrollContent: {
